@@ -2,8 +2,8 @@
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
-using VerteX.VirtualMachine;
 using VerteX.Parsing;
+using VerteX.Compiling;
 using VerteX.Lexing;
 
 namespace VerteX.Program
@@ -43,9 +43,11 @@ namespace VerteX.Program
                     }
                 }
 
-                file.Close();
-
-                VVMachine.Run(save, norun, debugMode, logs);
+                Delegate assembly = Compilator.CompileCode(save, norun, debugMode, logs);
+                if (!norun)
+                {
+                    assembly.DynamicInvoke();
+                }
             }
         }
     }
