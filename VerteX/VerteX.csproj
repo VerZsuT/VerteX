@@ -44,18 +44,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseLibrary\IO.cs" />
-    <Compile Include="Compilator\Compilator.cs" />
-    <Compile Include="Lexer\Lexer.cs" />
-    <Compile Include="Lexer\LexMode.cs" />
-    <Compile Include="Lexer\Token.cs" />
-    <Compile Include="Lexer\TokenType.cs" />
-    <Compile Include="Parser\ParseMode.cs" />
-    <Compile Include="Parser\Parser.cs" />
+    <Compile Include="Compiling\ClassOfMethods.cs" />
+    <Compile Include="Compiling\CodeGenerator.cs" />
+    <Compile Include="Compiling\Compilator.cs" />
+    <Compile Include="Compiling\GeneratorClasses\MainClass.cs" />
+    <Compile Include="Compiling\GeneratorClasses\NewFunctionClass.cs" />
+    <Compile Include="Compiling\GeneratorClasses\UserMethodsClass.cs" />
+    <Compile Include="Lexing\Lexer.cs" />
+    <Compile Include="Lexing\LexMode.cs" />
+    <Compile Include="Lexing\Token.cs" />
+    <Compile Include="Lexing\TokenType.cs" />
+    <Compile Include="Parsing\Check.cs" />
+    <Compile Include="Parsing\ParseExceptions.cs" />
+    <Compile Include="Parsing\ParseMode.cs" />
+    <Compile Include="Parsing\Parser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VirtualMachine\Variable.cs" />
-    <Compile Include="VirtualMachine\VariableType.cs" />
-    <Compile Include="VirtualMachine\VVMachine.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
