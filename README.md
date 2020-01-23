@@ -37,7 +37,7 @@ _Находится в стадии разработки._
 выводНаЭкран(автор);
 ```
 
-Cобираем проект в Visual Studio, либо качаем сборку с Google Drive по [ссылке](https://drive.google.com/open?id=1fm7YnVvtONoAvic5Nkr7Gg8WaNhnMP73).
+Cобираем проект в Visual Studio, либо качаем сборку с Google Drive по [ссылке](https://drive.google.com/open?id=1IV6ey2o195KLGWqhbBpwOsPwD6FSGtxy).
 
 Переносим в папку со сборкой файл с кодом (чтобы не прописывать полный путь).
 
