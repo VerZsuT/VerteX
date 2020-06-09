@@ -43,23 +43,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="General\Arguments.cs" />
     <Compile Include="BaseLibrary\IO.cs" />
-    <Compile Include="Compiling\ClassOfMethods.cs" />
-    <Compile Include="Compiling\CodeGenerator.cs" />
+    <Compile Include="Compiling\Generators\BaseGenerator.cs" />
+    <Compile Include="Compiling\CodeManager.cs" />
     <Compile Include="Compiling\Compilator.cs" />
-    <Compile Include="Compiling\GeneratorClasses\MainClass.cs" />
-    <Compile Include="Compiling\GeneratorClasses\NewFunctionClass.cs" />
-    <Compile Include="Compiling\GeneratorClasses\UserMethodsClass.cs" />
+    <Compile Include="Compiling\Generators\Main.cs" />
+    <Compile Include="Compiling\Generators\NewFunction.cs" />
+    <Compile Include="Compiling\Generators\UserMethods.cs" />
+    <Compile Include="Lexing\Keywords.cs" />
+    <Compile Include="Lexing\KeywordType.cs" />
     <Compile Include="Lexing\Lexer.cs" />
-    <Compile Include="Lexing\LexMode.cs" />
     <Compile Include="Lexing\Token.cs" />
+    <Compile Include="Lexing\TokenList.cs" />
     <Compile Include="Lexing\TokenType.cs" />
-    <Compile Include="Parsing\Check.cs" />
-    <Compile Include="Parsing\ParseExceptions.cs" />
+    <Compile Include="Parsing\Checker.cs" />
+    <Compile Include="Parsing\Exceptions.cs" />
     <Compile Include="Parsing\ParseMode.cs" />
     <Compile Include="Parsing\Parser.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="General\MainPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="General\RunMode.cs" />
+    <Compile Include="General\Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

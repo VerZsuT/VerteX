@@ -6,66 +6,96 @@ using System.Reflection;
 
 namespace VerteX.Compiling
 {
+    /// <summary>
+    /// Компилятор кода.
+    /// </summary>
     public static class Compilator
     {
+        /// <summary>
+        /// Шапка класса сборки.
+        /// </summary>
         private static readonly string header = "namespace VerteX.Code\n{\n\tpublic static class EntryClass\n\t{";
 
-        private delegate void EmptyDelegate();
-        private static CodeDomProvider CSharpProvider = CodeDomProvider.CreateProvider("CSharp");
+        /// <summary>
+        /// Провайдер для компиляции.
+        /// </summary>
+        private static readonly CodeDomProvider CSharpProvider = CodeDomProvider.CreateProvider("CSharp");
 
-        private static List<string> usings = new List<string>()
+        /// <summary>
+        /// Все usings.
+        /// </summary>
+        private static readonly List<string> usings = new List<string>()
         {
             "VerteX.BaseLibrary"
         };
-        private static List<string> refferences = new List<string>()
+
+        /// <summary>
+        /// Все ссылки на dll.
+        /// </summary>
+        private static readonly List<string> refferences = new List<string>()
         {
             "System.dll",
             "System.Core.dll",
             "Microsoft.CSharp.dll",
             Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location
         };
-        private static CompilerParameters compilerParameters = new CompilerParameters()
+
+        /// <summary>
+        /// Параметры C# компилятора.
+        /// </summary>
+        private static readonly CompilerParameters compilerParameters = new CompilerParameters()
         {
             GenerateExecutable = true,
-            GenerateInMemory = true,
             MainClass = "VerteX.Code.EntryClass"
         };
 
-        public static Delegate CompileCode(bool save, bool norun , bool debugMode, bool logs)
+        /// <summary>
+        /// Собирает сформированный генератором код и компилирует в исполняемый файл.
+        /// </summary>
+        /// <param name="save">Флаг сохранения файла.</param>
+        /// <param name="debugMode">Флаг отладки.</param>
+        /// <param name="logs">Флаг логирования.</param>
+        public static Delegate CompileCode(bool save, bool debugMode, bool logs)
         {
-            string mainCode = CodeGenerator.Main.ToString();
-            string userMethodsCode = CodeGenerator.UserMethods.ToString();
-            string program = GetUsingsString() + header + mainCode + "\t}\n" + userMethodsCode + "}";
+            string mainCode = CodeManager.Main.ToString();
+            string userMethodsCode = CodeManager.UserMethods.ToString();
+            string fullCode = GetUsingsString() + header + mainCode + "\t}\n" + userMethodsCode + "}";
 
-            if (logs) Console.WriteLine("VerteX[CompileLog]: Компиляция...");
+            if (logs) 
+            { 
+                Console.WriteLine("VerteX[CompileLog]: Компиляция..."); 
+            }
 
             compilerParameters.GenerateInMemory = !save;
             compilerParameters.ReferencedAssemblies.AddRange(refferences.ToArray());
-            var result = CSharpProvider.CompileAssemblyFromSource(compilerParameters, program);
+            CompilerResults result = CSharpProvider.CompileAssemblyFromSource(compilerParameters, fullCode);
 
             if (debugMode)
             {
-                Console.WriteLine($"Code:\"\n\n{program}\n\"\n");
+                Console.WriteLine($"Vertex[CompileDebug](code): \"\n\n{fullCode}\n\"\n");
                 foreach (var error in result.Errors) { Console.WriteLine(error); }
             }
             
             MethodInfo info = result.CompiledAssembly.GetType("VerteX.Code.EntryClass").GetMethod("Main");
-            
-            if (logs) Console.WriteLine("VerteX[CompileLog]: Компиляция завершена.");
+
+            if (logs)
+            {
+                Console.WriteLine("VerteX[CompileLog]: Компиляция завершена.");
+            }
 
             if (save)
             {
                 string location = $"{Environment.CurrentDirectory}\\assembly.exe";
-                if (File.Exists(location))
-                {
-                    File.Delete(location);
-                }
+                if (File.Exists(location)) File.Delete(location);
                 File.Move(result.CompiledAssembly.Location, location);
             }
             
             return info.CreateDelegate(typeof(Action));
         }
 
+        /// <summary>
+        /// Возвращает блок кода usings в виде строки.
+        /// </summary>
         private static string GetUsingsString()
         {
             string outString = "";

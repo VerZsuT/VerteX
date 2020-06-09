@@ -1,17 +1,26 @@
 ﻿namespace VerteX.Lexing
 {
+    /// <summary>
+    /// Тип токена (словесной единица языка).
+    /// </summary>
     public enum TokenType
     {
         Id,
+        Keyword,
         Number,
         String,
-        Operator,
+        AssignOperator,
+        ArithmeticalOperator,
+        Dot,
+        LogicOperator,
+        UndefinedOperator,
         ComandEnd,
         BeginBrace,
         EndBrace,
         BeginParenthesis,
         EndParenthesis,
         BeginSquereBracket,
-        EndSquereBracket
+        EndSquereBracket,
+        Expression
     }
 }
