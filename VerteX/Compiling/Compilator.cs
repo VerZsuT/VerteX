@@ -37,7 +37,8 @@ namespace VerteX.Compiling
             "System.dll",
             "System.Core.dll",
             "Microsoft.CSharp.dll",
-            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location
+            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location,
+            Assembly.GetAssembly(typeof(BaseLibrary.Converting)).Location
         };
 
         /// <summary>

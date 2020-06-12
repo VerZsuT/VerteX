@@ -35,7 +35,7 @@ namespace VerteX.General
                         Console.WriteLine($"VerteX[LexerDebug](tokens):\n{tokens1.ToDebug()}");
                     }
                 }
-                Parser.Parse(tokens);
+                Parser.ParseTokens(tokens);
             }
             catch (Exception error)
             {

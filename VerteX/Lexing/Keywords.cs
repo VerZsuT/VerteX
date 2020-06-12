@@ -10,7 +10,7 @@ namespace VerteX.Lexing
         /// <summary>
         /// Словарь всех ключевых слов языка.
         /// </summary>
-        private static Dictionary<KeywordType, Token> dict = new Dictionary<KeywordType, Token>()
+        private static readonly Dictionary<KeywordType, Token> dict = new Dictionary<KeywordType, Token>()
         {
             {KeywordType.If, new Token(TokenType.Keyword, "если")},
             {KeywordType.Function, new Token(TokenType.Keyword, "функция")},

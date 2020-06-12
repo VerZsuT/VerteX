@@ -18,7 +18,7 @@ namespace VerteX.Lexing
                 tokensString += token;
             }
 
-            return tokensString;
+            return tokensString.Trim();
         }
 
         /// <summary>

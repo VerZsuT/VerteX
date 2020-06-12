@@ -21,6 +21,7 @@
         EndParenthesis,
         BeginSquereBracket,
         EndSquereBracket,
-        Expression
+        Expression,
+        Comma
     }
 }

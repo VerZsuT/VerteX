@@ -8,6 +8,22 @@ namespace VerteX.Parsing
     public static class Checker
     {
         /// <summary>
+        /// Определяет имеет ли конструкция начало тела.
+        /// </summary>
+        public static bool IsBeginBody(TokenList lineTokens)
+        {
+            return IsFunctionCreation(lineTokens) || IsIfConstruction(lineTokens) || IsElseConstruction(lineTokens);
+        }
+
+        /// <summary>
+        /// Определяет имеет ли конструкция конец тела.
+        /// </summary>
+        public static bool IsEndingBody(TokenList lineTokens)
+        {
+            return IsEndBrace(lineTokens) || IsElseConstruction(lineTokens);
+        }
+
+        /// <summary>
         /// Определяет вызов функции.
         /// </summary>
         public static bool IsFunctionCall(TokenList lineTokens)
@@ -68,7 +84,7 @@ namespace VerteX.Parsing
         }
 
         /// <summary>
-        /// Определяет условную конструкцию IF.
+        /// Определяет конструкцию IF.
         /// </summary>
         public static bool IsIfConstruction(TokenList lineTokens)
         {
@@ -78,6 +94,17 @@ namespace VerteX.Parsing
                    lineTokens[1].TypeIs(TokenType.BeginParenthesis) &&
                    lineTokens[-2].TypeIs(TokenType.EndParenthesis) &&
                    lineTokens[-1].TypeIs(TokenType.BeginBrace);
+        }
+
+        /// <summary>
+        /// Определяет конструкцию ELSE.
+        /// </summary>
+        public static bool IsElseConstruction(TokenList lineTokens)
+        {
+            if (lineTokens.Count < 3) return false;
+            return lineTokens[0].TypeIs(TokenType.EndBrace) &&
+                   lineTokens[1].TypeIs(KeywordType.Else) &&
+                   lineTokens[2].TypeIs(TokenType.BeginBrace);
         }
     }
 }

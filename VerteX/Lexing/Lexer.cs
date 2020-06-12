@@ -38,6 +38,8 @@ namespace VerteX.Lexing
                 currentIndex = 0;
                 TokenList tokenList = new TokenList();
                 currentLine = line;
+                if (currentLine.Trim() == "") continue;
+
                 while (currentIndex < line.Length)
                 {
                     char ch = GetCurrentChar();
@@ -121,8 +123,30 @@ namespace VerteX.Lexing
             char ch = GetCurrentChar();
             string number = "";
 
-            while (char.IsDigit(ch))
+            while (char.IsDigit(ch) || ch == '.')
             {
+                if (ch == '.')
+                {
+                    string firstPart = number;
+                    string secondPart = "";
+
+                    ch = GetNextChar();
+                    while (char.IsDigit(ch))
+                    {
+                        secondPart += ch;
+                        ch = GetNextChar();
+                    }
+                    currentIndex--;
+                    if (secondPart == "") 
+                    { 
+                        return firstPart; 
+                    }
+                    else
+                    {
+                        return $"{firstPart}.{secondPart}";
+                    }
+                }
+
                 number += ch;
                 ch = GetNextChar();
             }
@@ -222,7 +246,7 @@ namespace VerteX.Lexing
             };
             List<string> logicOperators = new List<string>()
             {
-                ">", "<", "&", "|", "!", "==", "!=", "<=", ">="
+                ">", "<", "&", "&&", "|", "||", "!", "==", "!=", "<=", ">="
             };
 
             if (arithmeticOperators.Contains(op))
@@ -240,6 +264,10 @@ namespace VerteX.Lexing
             else if (op == "=")
             {
                 return TokenType.AssignOperator;
+            }
+            else if (op == ",")
+            {
+                return TokenType.Comma;
             }
 
             return TokenType.UndefinedOperator;

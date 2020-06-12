@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using VerteX.Compiling.Generators;
 using VerteX.Parsing;
@@ -30,8 +31,9 @@ namespace VerteX.Compiling
         /// </summary>
         public static Dictionary<string, List<string>> namespaces = new Dictionary<string, List<string>>()
         {
-            {"IO", new List<string>() {"Print", "Input"}},
-            {"UserMethods", new List<string>()}
+            { "IO", new List<string>() {"Print", "Input"} },
+            { "UserMethods", new List<string>() },
+            { "Converting", new List<string>() {"Int"} }
         };
 
         /// <summary>
@@ -39,8 +41,9 @@ namespace VerteX.Compiling
         /// </summary>
         public static Dictionary<string, string> namesMap = new Dictionary<string, string>()
         {
-            {"печать", "Print"},
-            {"ввод", "Input"}
+            { "печать", "Print" },
+            { "ввод", "Input" },
+            { "целое", "Int" }
         };
 
         /// <summary>

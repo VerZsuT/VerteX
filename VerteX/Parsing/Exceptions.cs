@@ -8,20 +8,9 @@ namespace VerteX.Parsing.Exceptions
     [Serializable]
     public class LineParsingException : Exception
     {
-        /// <summary>
-        /// Исключение парсинга строки с указанием индекса.
-        /// </summary>
-        public LineParsingException(int lineIndex)
+        public LineParsingException(string code)
         {
-            Console.WriteLine($"VerteX[ParserError]: Не удалось распознать строку {lineIndex}.");
-        }
-
-        /// <summary>
-        /// Исключение парсинга строки с указанием индекса и имени метода, в объявлении которого произошла ошибка.
-        /// </summary>
-        public LineParsingException(int lineIndex, string methodName)
-        {
-            Console.WriteLine($"VerteX[ParserError]: Не удалось распознать строку {lineIndex} при объявлении метода {methodName}.");
+            Console.WriteLine($"VerteX[ParsingError]: Не удалось распознать строку '{code}'.");
         }
     }
 }

@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseLibrary\Converting.cs" />
     <Compile Include="General\Arguments.cs" />
     <Compile Include="BaseLibrary\IO.cs" />
     <Compile Include="Compiling\Generators\BaseGenerator.cs" />

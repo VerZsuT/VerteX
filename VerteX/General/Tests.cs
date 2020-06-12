@@ -159,7 +159,7 @@ namespace VerteX.General
         /// </summary>
         private static void Parse(string line)
         {
-            Parser.Parse(Lexer.Lex(line));
+            Parser.ParseTokens(Lexer.Lex(line));
         }
     }
 }

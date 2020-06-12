@@ -19,51 +19,70 @@ namespace VerteX.Parsing
         /// <summary>
         /// Индекс строки, которая парсится в текущий момент.
         /// </summary>
-        private static int lineIndex;
+        private static int lineIndex = 0;
 
         /// <summary>
         /// Все токены, которые нужно распарсить.
         /// </summary>
         private static List<TokenList> tokens;
 
+        public static void ParseTokens(List<TokenList> codeTokens)
+        {
+            tokens = codeTokens;
+            while (lineIndex < codeTokens.Count)
+            {
+                TokenList lineTokens = codeTokens[lineIndex];
+                Parse(lineTokens);
+            }
+        }
+
         /// <summary>
         /// Определяет тип команды и "дёргает" методы генераторов кода.
         /// </summary>
         /// <param name="lineTokens">Токены, созданные лексером.</param>
         /// <returns>Тип команды. Используется для отладки.</returns>
-        public static void Parse(List<TokenList> codeTokens)
+        private static void Parse(List<TokenList> codeTokens)
         {
-            tokens = codeTokens;
-            for (lineIndex = 0; lineIndex < codeTokens.Count; lineIndex++)
+            for (int index = 0; index < codeTokens.Count; index++)
             {
-                TokenList lineTokens = codeTokens[lineIndex];
-                if (lineTokens.Count == 0) continue;
-
-                if (Checker.IsFunctionCall(lineTokens))
-                {
-                    ParseFunctionCall(lineTokens);
-                }
-                else if (Checker.IsVariableSet(lineTokens))
-                {
-                    ParseVariableSet(lineTokens);
-                }
-                else if (Checker.IsFunctionCreation(lineTokens))
-                {
-                    ParseFunctionCreation();
-                }
-                else if (Checker.IsEndBrace(lineTokens))
-                {
-                    ParseConstructionEnd();
-                }
-                else if (Checker.IsIfConstruction(lineTokens))
-                {
-                    ParseIfConstruction(lineTokens);
-                }
-                else
-                {
-                    throw new LineParsingException(lineIndex + 1);
-                }
+                TokenList lineTokens = codeTokens[index];
+                Parse(lineTokens);
             }
+        }
+
+        private static void Parse(TokenList lineTokens)
+        {
+            if (lineTokens.Count == 0 && lineTokens.ToString().Trim() == "") return;
+
+            if (Checker.IsFunctionCall(lineTokens))
+            {
+                ParseFunctionCall(lineTokens);
+            }
+            else if (Checker.IsVariableSet(lineTokens))
+            {
+                ParseVariableSet(lineTokens);
+            }
+            else if (Checker.IsFunctionCreation(lineTokens))
+            {
+                ParseFunctionCreation();
+            }
+            else if (Checker.IsEndBrace(lineTokens))
+            {
+                ParseConstructionEnd();
+            }
+            else if (Checker.IsIfConstruction(lineTokens))
+            {
+                ParseIfConstruction(lineTokens);
+            }
+            else if (Checker.IsElseConstruction(lineTokens))
+            {
+                ParseElseConstruction();
+            }
+            else
+            {
+                throw new LineParsingException(lineTokens.ToString());
+            }
+            lineIndex++;
         }
 
         /// <summary>
@@ -90,6 +109,11 @@ namespace VerteX.Parsing
             {
                 CodeManager.GetGenerator(parseMode).AddFunctionCall(methodName);
             }
+        }
+
+        private static void ParseElseConstruction()
+        {
+            CodeManager.GetGenerator(parseMode).AddElseConstruction();
         }
 
         /// <summary>
@@ -130,39 +154,33 @@ namespace VerteX.Parsing
                 CodeManager.NewFunction.AddFunctionHeader(methodName);
             }
 
-            List<TokenList> bodyTokens = GetFunctionBody();
-            ParseFunctionBody(bodyTokens, methodName);
+            List<TokenList> bodyTokens = GetBody(true);
+            ParseFunctionBody(bodyTokens);
         }
 
         /// <summary>
-        /// Получает тело функции между {}.
+        /// Получает тело между {}.
         /// </summary>
-        private static List<TokenList> GetFunctionBody()
+        private static List<TokenList> GetBody(bool isFunctionBody = false)
         {
             List<TokenList> list = new List<TokenList>();
             int beginsCount = 1;
 
-            for (int index = lineIndex + 1; index < tokens.Count; index++)
+            for (int index = ++lineIndex; index < tokens.Count; index++)
             {
                 TokenList lineTokens = tokens[index];
                 if (lineTokens.Count == 0) continue;
 
-                if (Checker.IsIfConstruction(lineTokens))
-                {
-                    beginsCount++;
-                }
-                else if (Checker.IsEndBrace(lineTokens))
-                {
-                    beginsCount--;
-                }
-                else if (Checker.IsFunctionCreation(lineTokens))
+                if (isFunctionBody && Checker.IsFunctionCreation(lineTokens))
                 {
                     throw new System.Exception("Нельзя объявлять новую функцию в теле другой функции!");
                 }
 
+                if (Checker.IsEndingBody(lineTokens)) beginsCount--;
+                if (Checker.IsBeginBody(lineTokens)) beginsCount++;
+
                 if (beginsCount == 0)
                 {
-                    lineIndex = index;
                     break;
                 }
                 else
@@ -170,43 +188,17 @@ namespace VerteX.Parsing
                     list.Add(lineTokens);
                 }
             }
-            
+
             return list;
         }
 
         /// <summary>
         /// Парсит тело функции.
         /// </summary>
-        /// <param name="bodyTokens"></param>
-        /// <param name="functionName"></param>
-        private static void ParseFunctionBody(List<TokenList> bodyTokens, string functionName)
+        private static void ParseFunctionBody(List<TokenList> bodyTokens)
         {
             parseMode = ParseMode.FunctionCreation;
-            for (int index = 0; index < bodyTokens.Count; index++)
-            {
-                TokenList lineTokens = bodyTokens[index];
-                if (Checker.IsFunctionCall(lineTokens))
-                {
-                    ParseFunctionCall(lineTokens);
-                }
-                else if (Checker.IsVariableSet(lineTokens))
-                {
-                    ParseVariableSet(lineTokens);
-                }
-                else if (Checker.IsEndBrace(lineTokens))
-                {
-                    ParseConstructionEnd();
-                }
-                else if (Checker.IsIfConstruction(lineTokens))
-                {
-                    ParseIfConstruction(lineTokens);
-                }
-                else
-                {
-                    throw new LineParsingException(lineIndex + 1, functionName);
-                }
-            }
-
+            Parse(bodyTokens);
             CodeManager.NewFunction.Create();
             parseMode = ParseMode.Default;
         }

@@ -39,6 +39,15 @@ namespace VerteX.Compiling.Generators
         }
 
         /// <summary>
+        /// Добавляет конструкцию ELSE в код.
+        /// </summary>
+        public void AddElseConstruction()
+        {
+            string operationCode = "} else {";
+            code.Add(TransformOperationCode(operationCode));
+        }
+
+        /// <summary>
         /// Добавляет конец конструкции в код.
         /// </summary>
         public void AddConstructionEnd()
