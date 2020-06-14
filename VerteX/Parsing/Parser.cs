@@ -26,63 +26,110 @@ namespace VerteX.Parsing
         /// </summary>
         private static List<TokenList> tokens;
 
-        public static void ParseTokens(List<TokenList> codeTokens)
-        {
-            tokens = codeTokens;
-            while (lineIndex < codeTokens.Count)
-            {
-                TokenList lineTokens = codeTokens[lineIndex];
-                Parse(lineTokens);
-            }
-        }
 
         /// <summary>
         /// Определяет тип команды и "дёргает" методы генераторов кода.
         /// </summary>
         /// <param name="lineTokens">Токены, созданные лексером.</param>
         /// <returns>Тип команды. Используется для отладки.</returns>
-        private static void Parse(List<TokenList> codeTokens)
+        public static void Parse(List<TokenList> codeTokens)
         {
-            for (int index = 0; index < codeTokens.Count; index++)
+            lineIndex = 0;
+            tokens = codeTokens;
+            while (lineIndex < codeTokens.Count)
             {
-                TokenList lineTokens = codeTokens[index];
-                Parse(lineTokens);
+                TokenList currentLineTokens = codeTokens[lineIndex];
+                TokenList nextLineTokens = GetTokens(lineIndex + 1, codeTokens);
+
+                Parse(currentLineTokens, nextLineTokens);
             }
         }
 
-        private static void Parse(TokenList lineTokens)
+        private static void Parse(TokenList currentLineTokens, TokenList nextLineTokens)
         {
-            if (lineTokens.Count == 0 && lineTokens.ToString().Trim() == "") return;
+            if (currentLineTokens.Count == 0 && currentLineTokens.ToString().Trim() == "") return;
+            if (Checker.IsBeginBrace(currentLineTokens)) return;
 
-            if (Checker.IsFunctionCall(lineTokens))
+            if (Checker.IsFunctionCall(currentLineTokens))
             {
-                ParseFunctionCall(lineTokens);
+                ParseFunctionCall(currentLineTokens);
             }
-            else if (Checker.IsVariableSet(lineTokens))
+            else if (Checker.IsVariableSet(currentLineTokens))
             {
-                ParseVariableSet(lineTokens);
+                ParseVariableSet(currentLineTokens);
             }
-            else if (Checker.IsFunctionCreation(lineTokens))
+            else if (Checker.IsFunctionCreation(currentLineTokens, nextLineTokens))
             {
-                ParseFunctionCreation();
+                if (Checker.IsShortFunctionCreation(currentLineTokens))
+                {
+                    ParseFunctionCreation();
+                }
+                else if (Checker.IsLongFunctionCreation(currentLineTokens, nextLineTokens))
+                {
+                    ParseFunctionCreation();
+                    lineIndex++;
+                }
             }
-            else if (Checker.IsEndBrace(lineTokens))
+            else if (Checker.IsEndBrace(currentLineTokens))
             {
                 ParseConstructionEnd();
             }
-            else if (Checker.IsIfConstruction(lineTokens))
+            else if (Checker.IsIfConstruction(currentLineTokens, nextLineTokens))
             {
-                ParseIfConstruction(lineTokens);
+                if (Checker.IsShortIfConstruction(currentLineTokens))
+                {
+                    ParseIfConstruction(currentLineTokens);
+                }
+                else if (Checker.IsLongIfConstruction(currentLineTokens, nextLineTokens))
+                {
+                    ParseIfConstruction(currentLineTokens);
+                    lineIndex++;
+                }
             }
-            else if (Checker.IsElseConstruction(lineTokens))
+            else if (Checker.IsElseConstruction(currentLineTokens, nextLineTokens))
             {
-                ParseElseConstruction();
+                if (Checker.IsShortElseConstruction(currentLineTokens))
+                {
+                    ParseElseConstruction(true);
+                }
+                else if (Checker.IsLongElseConstruction(currentLineTokens, nextLineTokens))
+                {
+                    ParseElseConstruction(false);
+                    lineIndex++;
+                }
             }
             else
             {
-                throw new LineParsingException(lineTokens.ToString());
+                throw new LineParsingException(currentLineTokens.ToString());
             }
             lineIndex++;
+        }
+
+        /// <summary>
+        /// Возвращает токены между ();
+        /// </summary>
+        public static TokenList GetExpressionInParenthesis(TokenList lineTokens)
+        {
+            TokenList list = new TokenList();
+            int beginsCount = 0;
+
+            foreach (Token token in lineTokens)
+            {
+                if (token.TypeIs(TokenType.BeginParenthesis))
+                {
+                    beginsCount++;
+                }
+                else if (token.TypeIs(TokenType.EndParenthesis))
+                {
+                    beginsCount--;
+                }
+                else if (beginsCount > 0)
+                {
+                    list.Add(token);
+                }
+            }
+
+            return list;
         }
 
         /// <summary>
@@ -111,9 +158,12 @@ namespace VerteX.Parsing
             }
         }
 
-        private static void ParseElseConstruction()
+        /// <summary>
+        /// Парсит конструкцию ELSE.
+        /// </summary>
+        private static void ParseElseConstruction(bool withParenthesis)
         {
-            CodeManager.GetGenerator(parseMode).AddElseConstruction();
+            CodeManager.GetGenerator(parseMode).AddElseConstruction(withParenthesis);
         }
 
         /// <summary>
@@ -121,7 +171,7 @@ namespace VerteX.Parsing
         /// </summary>
         private static void ParseIfConstruction(TokenList lineTokens)
         {
-            TokenList expression = lineTokens.GetRange(2, lineTokens.Count - 2);
+            TokenList expression = GetExpressionInParenthesis(lineTokens);
             CodeManager.GetGenerator(parseMode).AddIfConstruction(expression);
         }
 
@@ -131,7 +181,7 @@ namespace VerteX.Parsing
         private static void ParseVariableSet(TokenList lineTokens)
         {
             string variableName = lineTokens[0].value;
-            TokenList valueExpression = lineTokens.GetRange(2, lineTokens.Count - 1);
+            TokenList valueExpression = lineTokens.GetRange(2);
 
             CodeManager.GetGenerator(parseMode).AddVariableAssignment(variableName, valueExpression);
         }
@@ -164,29 +214,37 @@ namespace VerteX.Parsing
         private static List<TokenList> GetBody(bool isFunctionBody = false)
         {
             List<TokenList> list = new List<TokenList>();
-            int beginsCount = 1;
+            int beginsCount = 0;
+            bool isStart = true;
 
-            for (int index = ++lineIndex; index < tokens.Count; index++)
+            for (int index = lineIndex++; index < tokens.Count; index++)
             {
-                TokenList lineTokens = tokens[index];
-                if (lineTokens.Count == 0) continue;
+                TokenList currentLineTokens = tokens[index];
+                TokenList nextLineTokens = GetTokens(index + 1, tokens);
 
-                if (isFunctionBody && Checker.IsFunctionCreation(lineTokens))
+                if (currentLineTokens.Count == 0) continue;
+
+                if (isFunctionBody && Checker.IsFunctionCreation(currentLineTokens, nextLineTokens) && !isStart)
                 {
                     throw new System.Exception("Нельзя объявлять новую функцию в теле другой функции!");
                 }
 
-                if (Checker.IsEndingBody(lineTokens)) beginsCount--;
-                if (Checker.IsBeginBody(lineTokens)) beginsCount++;
+                if (Checker.IsEndingBody(currentLineTokens)) beginsCount--;
+                if (Checker.IsBeginBody(currentLineTokens)) beginsCount++;
 
-                if (beginsCount == 0)
+                if (!isStart)
                 {
-                    break;
+                    if (beginsCount == 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        list.Add(currentLineTokens);
+                    }
                 }
-                else
-                {
-                    list.Add(lineTokens);
-                }
+
+                if (beginsCount > 0) isStart = false;
             }
 
             return list;
@@ -198,7 +256,13 @@ namespace VerteX.Parsing
         private static void ParseFunctionBody(List<TokenList> bodyTokens)
         {
             parseMode = ParseMode.FunctionCreation;
-            Parse(bodyTokens);
+            for (int index = 0; index < bodyTokens.Count; index++)
+            {
+                TokenList currentLineTokens = bodyTokens[index];
+                TokenList nextLineTokens = GetTokens(index + 1, bodyTokens);
+
+                Parse(currentLineTokens, nextLineTokens);
+            }
             CodeManager.NewFunction.Create();
             parseMode = ParseMode.Default;
         }
@@ -209,7 +273,7 @@ namespace VerteX.Parsing
         /// <returns>Список токенов параметров. Запятые не входят.</returns>
         private static TokenList GetFunctionParameters(TokenList lineTokens)
         {
-            TokenList parameters = lineTokens.GetRange(3, lineTokens.Count - 2);
+            TokenList parameters = GetExpressionInParenthesis(lineTokens);
             parameters.DeleteAll(",");
 
             return parameters;
@@ -221,7 +285,32 @@ namespace VerteX.Parsing
         /// <returns>Список токенов параметров, с запятыми.</returns>
         private static TokenList GetFunctionAttributes(TokenList lineTokens)
         {
-            return lineTokens.GetRange(2, lineTokens.Count - 2);
+            return GetExpressionInParenthesis(lineTokens);
+        }
+
+        private static TokenList GetNextTokens()
+        {
+            try
+            {
+                TokenList list = tokens[lineIndex + 1];
+                return list;
+            }
+            catch
+            {
+                return new TokenList();
+            }
+        }
+
+        private static TokenList GetTokens(int index, List<TokenList> tokenList)
+        {
+            try
+            {
+                return tokenList[index];
+            }
+            catch
+            {
+                return new TokenList();
+            }
         }
     }
 }

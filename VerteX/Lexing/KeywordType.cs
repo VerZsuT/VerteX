@@ -8,6 +8,8 @@
         If,
         Else,
         Function,
-        Undefined
+        Undefined,
+        True,
+        False
     }
 }

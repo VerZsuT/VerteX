@@ -18,6 +18,7 @@ namespace VerteX.Lexing
         /// </summary>
         public string value;
 
+
         public Token(TokenType type, string value)
         {
             this.type = type;
@@ -67,6 +68,14 @@ namespace VerteX.Lexing
             else if (type == TokenType.Id)
             {
                 return CodeManager.TransformId(value);
+            }
+            else if (TypeIs(KeywordType.True))
+            {
+                return "true";
+            }
+            else if (TypeIs(KeywordType.False))
+            {
+                return "false";
             }
 
             return value;

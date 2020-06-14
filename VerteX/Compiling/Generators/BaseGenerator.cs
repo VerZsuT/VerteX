@@ -34,16 +34,19 @@ namespace VerteX.Compiling.Generators
         /// <param name="expressionTokens">Логическое выражение.</param>
         public void AddIfConstruction(TokenList expressionTokens)
         {
-            string operationCode = $"if ({expressionTokens}) {{";
+            string operationCode = $"if ({expressionTokens}) {{\t";
             code.Add(TransformOperationCode(operationCode));
         }
 
         /// <summary>
         /// Добавляет конструкцию ELSE в код.
         /// </summary>
-        public void AddElseConstruction()
+        public void AddElseConstruction(bool withParenthesis)
         {
-            string operationCode = "} else {";
+            string operationCode;
+            if (withParenthesis) operationCode = "} else {\t";
+            else operationCode = "else {\t";
+
             code.Add(TransformOperationCode(operationCode));
         }
 

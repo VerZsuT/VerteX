@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using VerteX.Compiling.Generators;
 using VerteX.Parsing;
@@ -33,7 +32,7 @@ namespace VerteX.Compiling
         {
             { "IO", new List<string>() {"Print", "Input"} },
             { "UserMethods", new List<string>() },
-            { "Converting", new List<string>() {"Int"} }
+            { "Convert", new List<string>() {"ToInt32", "ToSingle", "ToBoolean", "ToString"} }
         };
 
         /// <summary>
@@ -43,7 +42,10 @@ namespace VerteX.Compiling
         {
             { "печать", "Print" },
             { "ввод", "Input" },
-            { "целое", "Int" }
+            { "целое", "ToInt32" },
+            { "дробное", "ToSingle" },
+            { "булевое", "ToBoolean" },
+            { "строка", "ToString" }
         };
 
         /// <summary>

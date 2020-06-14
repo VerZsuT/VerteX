@@ -14,7 +14,9 @@ namespace VerteX.Lexing
         {
             {KeywordType.If, new Token(TokenType.Keyword, "если")},
             {KeywordType.Function, new Token(TokenType.Keyword, "функция")},
-            {KeywordType.Else, new Token(TokenType.Keyword, "иначе")}
+            {KeywordType.Else, new Token(TokenType.Keyword, "иначе")},
+            {KeywordType.True, new Token(TokenType.Keyword, "истина")},
+            {KeywordType.False, new Token(TokenType.Keyword, "лож")}
         };
 
         /// <summary>

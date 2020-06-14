@@ -16,20 +16,21 @@ namespace VerteX.General
         /// </summary>
         public static void CreateFunction()
         {
-            Console.WriteLine("VerteX[RunTests]: Запуск теста создания функции...");
+            Console.WriteLine("VerteX[RunTests]: Запуск теста создания функций...");
 
-            Console.WriteLine("VerteX[RunTests](1): Без аргументов.");
+            Console.WriteLine("VerteX[RunTests](1): Создание функции без аргументов.");
             try
             {
-                Parse("функция привет() { \n печать(1); \n }");
+                Parse("функция привет() { \n печать(1) \n }");
                 Run();
-                Console.WriteLine("VerteX[RunTests](1): Успешно!");
-                Console.WriteLine("VerteX[RunTests](1.1): Вызов функции...");
+                Console.WriteLine("VerteX[RunTests](1): Успешно!\n");
+                Console.WriteLine("VerteX[RunTests](1.1): Вызов функции без аргументов...");
                 try
                 {
-                    Parse("функция привет() { \n печать(1); \n } \n привет();");
+                    Console.Write("VerteX[TestsOut](1.1): ");
+                    Parse("функция привет() { \n печать(1) \n } \n привет()");
                     Run();
-                    Console.WriteLine("VerteX[RunTests](1.1): Успешно!");
+                    Console.WriteLine("VerteX[RunTests](1.1): Успешно!\n");
                 }
                 catch
                 {
@@ -41,18 +42,19 @@ namespace VerteX.General
                 Console.WriteLine("VerteX[RunTestsError](1): Ошибка создания функции без аргумента.");
             }
 
-            Console.WriteLine("VerteX[RunTests](2): С аргументом.");
+            Console.WriteLine("VerteX[RunTests](2): Создание функции с аргументом.");
             try
             {
-                Parse("функция привет(имя) { \n печать(имя); \n }");
+                Parse("функция привет(имя) { \n печать(имя) \n }");
                 Run();
-                Console.WriteLine("VerteX[RunTests](2): Успешно!");
-                Console.WriteLine("VerteX[RunTests](2.1): Вызов функции...");
+                Console.WriteLine("VerteX[RunTests](2): Успешно!\n");
+                Console.WriteLine("VerteX[RunTests](2.1): Вызов функции с аргументом...");
                 try
                 {
-                    Parse("функция привет(имя) { \n печать(имя); \n } \n привет('Саня');");
+                    Console.Write("VerteX[TestsOut](2.1): ");
+                    Parse("функция привет(имя) { \n печать(имя) \n } \n привет('Саня')");
                     Run();
-                    Console.WriteLine("VerteX[RunTests](2.1): Успешно!");
+                    Console.WriteLine("VerteX[RunTests](2.1): Успешно!\n");
                 }
                 catch
                 {
@@ -64,7 +66,7 @@ namespace VerteX.General
                 Console.WriteLine("VerteX[RunTestsError](2): Ошибка создания функции без аргумента.");
             }
             
-            Console.WriteLine("VerteX[RunTests]: Тест создания функции окочен.\n");
+            Console.WriteLine("VerteX[RunTests]: Тест создания функций окочен.\n");
         }
 
         /// <summary>
@@ -72,20 +74,21 @@ namespace VerteX.General
         /// </summary>
         public static void CreateVariable()
         {
-            Console.WriteLine("VerteX[RunTests]: Запуск теста создания переменной...");
+            Console.WriteLine("VerteX[RunTests]: Запуск теста объявления переменной...");
 
-            Console.WriteLine("VerteX[RunTests](1): Строка.");
+            Console.WriteLine("VerteX[RunTests](1): Объявление строковой переменной.");
             try
             {
-                Parse("имя = 'Саша';");
+                Parse("имя = 'Саша'");
                 Run();
-                Console.WriteLine("VerteX[RunTests](1): Успешно!");
+                Console.WriteLine("VerteX[RunTests](1): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](1.1): Использование строковой переменной.");
                 try
                 {
-                    Parse("имя = 'Саша'; \n печать(имя);");
+                    Console.Write("VerteX[TestsOut](1.1): ");
+                    Parse("имя = 'Саша' \n печать(имя)");
                     Run();
-                    Console.WriteLine("VerteX[RunTests](1.1): Успешно!");
+                    Console.WriteLine("VerteX[RunTests](1.1): Успешно!\n");
                 }
                 catch
                 {
@@ -97,18 +100,19 @@ namespace VerteX.General
                 Console.WriteLine("VerteX[RunTestsError](1): Ошибка создания строковой переменной.");
             }
 
-            Console.WriteLine("VerteX[RunTests](2): Число.");
+            Console.WriteLine("VerteX[RunTests](2): Объявление числовой переменной.");
             try
             {
-                Parse("число = 5;");
+                Parse("число = 5");
                 Run();
-                Console.WriteLine("VerteX[RunTests](2): Успешно!");
+                Console.WriteLine("VerteX[RunTests](2): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](2.1): Использование числовой переменной.");
                 try
                 {
-                    Parse("число = 5; \n печать(число);");
+                    Console.Write("VerteX[TestsOut](2.1): ");
+                    Parse("число = 5 \n печать(число)");
                     Run();
-                    Console.WriteLine("VerteX[RunTests](2.1): Успешно!");
+                    Console.WriteLine("VerteX[RunTests](2.1): Успешно!\n");
                 }
                 catch
                 {
@@ -120,18 +124,19 @@ namespace VerteX.General
                 Console.WriteLine("VerteX[RunTestsError](2): Ошибка создания числовой переменной.");
             }
 
-            Console.WriteLine("VerteX[RunTests](3): Создание переменной с выражением.");
+            Console.WriteLine("VerteX[RunTests](3): Объявление переменной с выражением.");
             try
             {
-                Parse("выражение = 5 + 2;");
+                Parse("выражение = 5 + 2");
                 Run();
-                Console.WriteLine("VerteX[RunTests](3): Успешно!");
+                Console.WriteLine("VerteX[RunTests](3): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](3.1): Использование переменной с выражением.");
                 try
                 {
-                    Parse("выражение = 5 + 2; \n печать(выражение);");
+                    Console.Write("VerteX[TestsOut](3.1): ");
+                    Parse("выражение = 5 + 2 \n печать(выражение)");
                     Run();
-                    Console.WriteLine("VerteX[RunTests](3.1): Успешно!");
+                    Console.WriteLine("VerteX[RunTests](3.1): Успешно!\n");
                 }
                 catch
                 {
@@ -159,7 +164,7 @@ namespace VerteX.General
         /// </summary>
         private static void Parse(string line)
         {
-            Parser.ParseTokens(Lexer.Lex(line));
+            Parser.Parse(Lexer.Lex(line));
         }
     }
 }

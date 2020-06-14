@@ -26,7 +26,8 @@ namespace VerteX.Compiling
         /// </summary>
         private static readonly List<string> usings = new List<string>()
         {
-            "VerteX.BaseLibrary"
+            "VerteX.BaseLibrary",
+            "System"
         };
 
         /// <summary>
@@ -37,8 +38,7 @@ namespace VerteX.Compiling
             "System.dll",
             "System.Core.dll",
             "Microsoft.CSharp.dll",
-            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location,
-            Assembly.GetAssembly(typeof(BaseLibrary.Converting)).Location
+            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location
         };
 
         /// <summary>

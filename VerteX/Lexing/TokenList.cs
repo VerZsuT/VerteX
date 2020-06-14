@@ -47,6 +47,14 @@ namespace VerteX.Lexing
             return newList;
         }
 
+        public TokenList GetRange(int firstIndex)
+        {
+            TokenList newList = new TokenList();
+            newList.AddRange(base.GetRange(firstIndex, Count - (firstIndex)));
+
+            return newList;
+        }
+
         /// <summary>
         /// Формирует и добавляет новый токен в список.
         /// </summary>
