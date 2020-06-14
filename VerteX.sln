@@ -1,12 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.779
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VerteX", "VerteX\VerteX.csproj", "{703FC3CA-3A22-4B4F-8E56-E871ED68ADD2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB1AA08C-F862-4BEA-BAEE-A016B8DCA33D}"
 	ProjectSection(SolutionItems) = preProject
+		Notepad++_synax.xml = Notepad++_synax.xml
 		README.md = README.md
 	EndProjectSection
 EndProject
