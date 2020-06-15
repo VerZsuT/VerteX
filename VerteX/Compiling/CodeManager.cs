@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-
 using VerteX.Compiling.Generators;
 using VerteX.Parsing;
 
@@ -32,7 +31,8 @@ namespace VerteX.Compiling
         {
             { "IO", new List<string>() {"Print", "Input"} },
             { "UserMethods", new List<string>() },
-            { "Convert", new List<string>() {"ToInt32", "ToSingle", "ToBoolean", "ToString"} }
+            { "Convert", new List<string>() {"ToInt32", "ToSingle", "ToString"} },
+            { "Converter", new List<string>() {"ToBoolean"} }
         };
 
         /// <summary>

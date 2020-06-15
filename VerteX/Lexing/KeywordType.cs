@@ -10,6 +10,8 @@
         Function,
         Undefined,
         True,
-        False
+        False,
+        While,
+        Do
     }
 }

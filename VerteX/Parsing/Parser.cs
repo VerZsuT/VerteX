@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-
-using VerteX.Lexing;
+﻿using System;
 using VerteX.Compiling;
-using VerteX.Parsing.Exceptions;
+using VerteX.Compiling.Generators;
+using VerteX.Lexing;
 
 namespace VerteX.Parsing
 {
@@ -17,92 +16,126 @@ namespace VerteX.Parsing
         private static ParseMode parseMode = ParseMode.Default;
 
         /// <summary>
-        /// Индекс строки, которая парсится в текущий момент.
+        /// Парсит основную пачку токенов.
         /// </summary>
-        private static int lineIndex = 0;
-
-        /// <summary>
-        /// Все токены, которые нужно распарсить.
-        /// </summary>
-        private static List<TokenList> tokens;
-
-
-        /// <summary>
-        /// Определяет тип команды и "дёргает" методы генераторов кода.
-        /// </summary>
-        /// <param name="lineTokens">Токены, созданные лексером.</param>
-        /// <returns>Тип команды. Используется для отладки.</returns>
-        public static void Parse(List<TokenList> codeTokens)
+        public static void ParseRoot(TokenList tokens)
         {
-            lineIndex = 0;
-            tokens = codeTokens;
-            while (lineIndex < codeTokens.Count)
-            {
-                TokenList currentLineTokens = codeTokens[lineIndex];
-                TokenList nextLineTokens = GetTokens(lineIndex + 1, codeTokens);
-
-                Parse(currentLineTokens, nextLineTokens);
-            }
+            Parse(tokens, out _);
         }
 
-        private static void Parse(TokenList currentLineTokens, TokenList nextLineTokens)
+        /// <summary>
+        /// Парсит тела конструкций, в том числе и новой функции.
+        /// </summary>
+        public static void Parse(TokenList tokens, out int counter)
         {
-            if (currentLineTokens.Count == 0 && currentLineTokens.ToString().Trim() == "") return;
-            if (Checker.IsBeginBrace(currentLineTokens)) return;
+            counter = 0;
+            while (counter < tokens.Count)
+            {
+                TokenList nextTokens = tokens.GetRange(counter);
+                Token currentToken = tokens[counter];
+                Token nextToken = tokens[counter + 1];
+                if (currentToken.TypeIs(TokenType.Id)) 
+                {
+                    // <variableName> = <expression>;
+                    if (nextToken.TypeIs(TokenType.AssignOperator))
+                    {
+                        string variableName = currentToken.value;
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        TokenList expression = nextTokens.GetRange(nextTokens.IndexOf("=") + 1, nextTokens.IndexOf(";"));
 
-            if (Checker.IsFunctionCall(currentLineTokens))
-            {
-                ParseFunctionCall(currentLineTokens);
-            }
-            else if (Checker.IsVariableSet(currentLineTokens))
-            {
-                ParseVariableSet(currentLineTokens);
-            }
-            else if (Checker.IsFunctionCreation(currentLineTokens, nextLineTokens))
-            {
-                if (Checker.IsShortFunctionCreation(currentLineTokens))
-                {
-                    ParseFunctionCreation();
+                        generator.AddVariableAssignment(variableName, expression);
+                        counter += nextTokens.IndexOf(";") + 1;
+                    }
+                    // <id>(<expression>);
+                    else if (nextToken.TypeIs(TokenType.BeginParenthesis))
+                    {
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        Token name = currentToken;
+                        TokenList attributes = GetExpressionInParenthesis(nextTokens);
+
+                        generator.AddFunctionCall(name, attributes);
+                        counter += nextTokens.IndexOf(";") + 1;
+                    }
                 }
-                else if (Checker.IsLongFunctionCreation(currentLineTokens, nextLineTokens))
+                else if (currentToken.TypeIs(TokenType.Keyword))
                 {
-                    ParseFunctionCreation();
-                    lineIndex++;
+                    // функция <functionName>(<parameters>) { <functionBody> }
+                    if (currentToken.TypeIs(KeywordType.Function))
+                    {
+                        NewFunction generator = CodeManager.NewFunction;
+                        string name = nextToken.value;
+                        TokenList parameters = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
+
+                        parameters.DeleteAll(",");
+                        generator.AddFunctionHeader(name, parameters);
+                        parseMode = ParseMode.FunctionCreation;
+                        Parse(body, out _);
+                        generator.Create();
+                        parseMode = ParseMode.Default;
+                    }
+                    // если (<expresion>) { <body> }
+                    else if (currentToken.TypeIs(KeywordType.If))
+                    {
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        TokenList expression = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
+
+                        generator.AddIfConstruction(expression);
+                        Parse(body, out _);
+                        generator.AddConstructionEnd();
+                    }
+                    // иначе { <body> }
+                    else if (currentToken.TypeIs(KeywordType.Else))
+                    {
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
+
+                        generator.AddElseConstruction();
+                        Parse(body, out _);
+                        generator.AddConstructionEnd();
+                    }
+                    // делать { <body> } пока (<expression>)
+                    else if (currentToken.TypeIs(KeywordType.Do))
+                    {
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
+
+                        generator.AddDoConstruction();
+                        Parse(body, out _);
+                        generator.AddConstructionEnd();
+                        nextTokens = tokens.GetRange(counter);
+                        Console.WriteLine($"{nextTokens} ddddd");
+                        currentToken = tokens[counter];
+                        
+                        if (currentToken.TypeIs(KeywordType.While))
+                        {
+                            TokenList expression = GetExpressionInParenthesis(nextTokens);
+                            generator.AddEndingWhileConstruction(expression);
+                            counter += nextTokens.IndexOf(";") + 1;
+                        }
+                        else
+                        {
+                            throw new Exception($"VerteX[ParsingError]: После окончания конструкции 'делать' ожидалось ключевое слово 'пока'.");
+                        }
+                    }
+                    // пока (<expression>) { <body> }
+                    else if (currentToken.TypeIs(KeywordType.While))
+                    {
+                        BaseGenerator generator = CodeManager.GetGenerator(parseMode);
+                        TokenList expression = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
+
+                        generator.AddWhileConstruction(expression);
+                        Parse(body, out _);
+                        generator.AddConstructionEnd();
+                    }
+                }
+                else
+                {
+                    throw new Exception($"VerteX[ParsingError]: Не удалось распознать слово '{currentToken}'.");
                 }
             }
-            else if (Checker.IsEndBrace(currentLineTokens))
-            {
-                ParseConstructionEnd();
-            }
-            else if (Checker.IsIfConstruction(currentLineTokens, nextLineTokens))
-            {
-                if (Checker.IsShortIfConstruction(currentLineTokens))
-                {
-                    ParseIfConstruction(currentLineTokens);
-                }
-                else if (Checker.IsLongIfConstruction(currentLineTokens, nextLineTokens))
-                {
-                    ParseIfConstruction(currentLineTokens);
-                    lineIndex++;
-                }
-            }
-            else if (Checker.IsElseConstruction(currentLineTokens, nextLineTokens))
-            {
-                if (Checker.IsShortElseConstruction(currentLineTokens))
-                {
-                    ParseElseConstruction(true);
-                }
-                else if (Checker.IsLongElseConstruction(currentLineTokens, nextLineTokens))
-                {
-                    ParseElseConstruction(false);
-                    lineIndex++;
-                }
-            }
-            else
-            {
-                throw new LineParsingException(currentLineTokens.ToString());
-            }
-            lineIndex++;
         }
 
         /// <summary>
@@ -111,6 +144,7 @@ namespace VerteX.Parsing
         public static TokenList GetExpressionInParenthesis(TokenList lineTokens)
         {
             TokenList list = new TokenList();
+            bool isStart = true;
             int beginsCount = 0;
 
             foreach (Token token in lineTokens)
@@ -118,6 +152,7 @@ namespace VerteX.Parsing
                 if (token.TypeIs(TokenType.BeginParenthesis))
                 {
                     beginsCount++;
+                    isStart = false;
                 }
                 else if (token.TypeIs(TokenType.EndParenthesis))
                 {
@@ -127,190 +162,50 @@ namespace VerteX.Parsing
                 {
                     list.Add(token);
                 }
+
+                if (beginsCount == 0 && !isStart)
+                {
+                    break;
+                }
             }
 
             return list;
-        }
-
-        /// <summary>
-        /// Парсит конец конструкции.
-        /// </summary>
-        private static void ParseConstructionEnd()
-        {
-            CodeManager.GetGenerator(parseMode).AddConstructionEnd();
-        }
-
-        /// <summary>
-        /// Парсит вызов функции.
-        /// </summary>
-        private static void ParseFunctionCall(TokenList lineTokens)
-        {
-            TokenList attributes = GetFunctionAttributes(lineTokens);
-            Token methodName = lineTokens[0];
-
-            if (attributes.Count != 0)
-            {
-                CodeManager.GetGenerator(parseMode).AddFunctionCall(methodName, attributes);
-            }
-            else
-            {
-                CodeManager.GetGenerator(parseMode).AddFunctionCall(methodName);
-            }
-        }
-
-        /// <summary>
-        /// Парсит конструкцию ELSE.
-        /// </summary>
-        private static void ParseElseConstruction(bool withParenthesis)
-        {
-            CodeManager.GetGenerator(parseMode).AddElseConstruction(withParenthesis);
-        }
-
-        /// <summary>
-        /// Парсит логическую конструкцию IF.
-        /// </summary>
-        private static void ParseIfConstruction(TokenList lineTokens)
-        {
-            TokenList expression = GetExpressionInParenthesis(lineTokens);
-            CodeManager.GetGenerator(parseMode).AddIfConstruction(expression);
-        }
-
-        /// <summary>
-        /// Парсит присвоение переменной.
-        /// </summary>
-        private static void ParseVariableSet(TokenList lineTokens)
-        {
-            string variableName = lineTokens[0].value;
-            TokenList valueExpression = lineTokens.GetRange(2);
-
-            CodeManager.GetGenerator(parseMode).AddVariableAssignment(variableName, valueExpression);
-        }
-
-        /// <summary>
-        /// Парсит объявление функции.
-        /// </summary>
-        private static void ParseFunctionCreation()
-        {
-            TokenList lineTokens = tokens[lineIndex];
-            string methodName = lineTokens[1].value;
-
-            if (Checker.IsHaveParams(lineTokens))
-            {
-                TokenList parameters = GetFunctionParameters(lineTokens);
-                CodeManager.NewFunction.AddFunctionHeader(methodName, parameters);
-            }
-            else
-            {
-                CodeManager.NewFunction.AddFunctionHeader(methodName);
-            }
-
-            List<TokenList> bodyTokens = GetBody(true);
-            ParseFunctionBody(bodyTokens);
         }
 
         /// <summary>
         /// Получает тело между {}.
         /// </summary>
-        private static List<TokenList> GetBody(bool isFunctionBody = false)
+        private static TokenList GetBody(TokenList tokens, out int counter, int index2)
         {
-            List<TokenList> list = new List<TokenList>();
+            TokenList list = new TokenList();
+            int index = 0;
             int beginsCount = 0;
             bool isStart = true;
 
-            for (int index = lineIndex++; index < tokens.Count; index++)
+            foreach (Token token in tokens)
             {
-                TokenList currentLineTokens = tokens[index];
-                TokenList nextLineTokens = GetTokens(index + 1, tokens);
-
-                if (currentLineTokens.Count == 0) continue;
-
-                if (isFunctionBody && Checker.IsFunctionCreation(currentLineTokens, nextLineTokens) && !isStart)
+                if (token.TypeIs(TokenType.BeginBrace))
                 {
-                    throw new System.Exception("Нельзя объявлять новую функцию в теле другой функции!");
+                    if (!isStart) list.Add(token);
+                    else isStart = false;
+                    beginsCount++;
                 }
-
-                if (Checker.IsEndingBody(currentLineTokens)) beginsCount--;
-                if (Checker.IsBeginBody(currentLineTokens)) beginsCount++;
-
-                if (!isStart)
+                else if (token.TypeIs(TokenType.EndBrace))
                 {
-                    if (beginsCount == 0)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        list.Add(currentLineTokens);
-                    }
+                    beginsCount--;
+                    if (beginsCount != 0) list.Add(token);
                 }
+                else if (beginsCount > 0)
+                {
+                    list.Add(token);
+                }
+                index++;
 
-                if (beginsCount > 0) isStart = false;
+                if (beginsCount == 0 && !isStart) break;
             }
+            counter = index2 + index;
 
             return list;
-        }
-
-        /// <summary>
-        /// Парсит тело функции.
-        /// </summary>
-        private static void ParseFunctionBody(List<TokenList> bodyTokens)
-        {
-            parseMode = ParseMode.FunctionCreation;
-            for (int index = 0; index < bodyTokens.Count; index++)
-            {
-                TokenList currentLineTokens = bodyTokens[index];
-                TokenList nextLineTokens = GetTokens(index + 1, bodyTokens);
-
-                Parse(currentLineTokens, nextLineTokens);
-            }
-            CodeManager.NewFunction.Create();
-            parseMode = ParseMode.Default;
-        }
-
-        /// <summary>
-        /// Получает параметры объявления функции.
-        /// </summary>
-        /// <returns>Список токенов параметров. Запятые не входят.</returns>
-        private static TokenList GetFunctionParameters(TokenList lineTokens)
-        {
-            TokenList parameters = GetExpressionInParenthesis(lineTokens);
-            parameters.DeleteAll(",");
-
-            return parameters;
-        }
-
-        /// <summary>
-        /// Получает аттрибуты вызова функции.
-        /// </summary>
-        /// <returns>Список токенов параметров, с запятыми.</returns>
-        private static TokenList GetFunctionAttributes(TokenList lineTokens)
-        {
-            return GetExpressionInParenthesis(lineTokens);
-        }
-
-        private static TokenList GetNextTokens()
-        {
-            try
-            {
-                TokenList list = tokens[lineIndex + 1];
-                return list;
-            }
-            catch
-            {
-                return new TokenList();
-            }
-        }
-
-        private static TokenList GetTokens(int index, List<TokenList> tokenList)
-        {
-            try
-            {
-                return tokenList[index];
-            }
-            catch
-            {
-                return new TokenList();
-            }
-        }
+        }        
     }
 }

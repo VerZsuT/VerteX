@@ -16,7 +16,9 @@ namespace VerteX.Lexing
             {KeywordType.Function, new Token(TokenType.Keyword, "функция")},
             {KeywordType.Else, new Token(TokenType.Keyword, "иначе")},
             {KeywordType.True, new Token(TokenType.Keyword, "истина")},
-            {KeywordType.False, new Token(TokenType.Keyword, "лож")}
+            {KeywordType.False, new Token(TokenType.Keyword, "лож")},
+            {KeywordType.While, new Token(TokenType.Keyword, "пока")},
+            {KeywordType.Do, new Token(TokenType.Keyword, "делать")}
         };
 
         /// <summary>

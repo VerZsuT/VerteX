@@ -13,6 +13,42 @@ namespace VerteX.Compiling.Generators
         protected string footer = "";
         protected List<string> code = new List<string>();
         protected List<string> variables = new List<string>();
+        protected int tabsCount = 0;
+
+        /// <summary>
+        /// Добавляет конструкцию WHILE после DO.
+        /// </summary>
+        public void AddEndingWhileConstruction(TokenList expression)
+        {
+            string operationCode = $"while ({expression});";
+
+            code.Add(TransformOperationCode(operationCode));
+        }
+
+        /// <summary>
+        /// Добавляет конструкцию WHILE с телом.
+        /// </summary>
+        /// <param name="expression"></param>
+        public void AddWhileConstruction(TokenList expression)
+        {
+            string operationCode = TransformOperationCode($"while ({expression})");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет конструкцию DO.
+        /// </summary>
+        public void AddDoConstruction()
+        {
+            string operationCode = TransformOperationCode("do");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
 
         /// <summary>
         /// Добавляет присвоение переменной в код.
@@ -24,6 +60,7 @@ namespace VerteX.Compiling.Generators
             bool isReassignment = variables.Contains(variableName);
             string prefix = !isReassignment ? "var " : "";
             string operationCode = $"{prefix}{variableName} = {variableExpression};";
+            if (!isReassignment) variables.Add(variableName);
 
             code.Add(TransformOperationCode(operationCode));
         }
@@ -34,20 +71,23 @@ namespace VerteX.Compiling.Generators
         /// <param name="expressionTokens">Логическое выражение.</param>
         public void AddIfConstruction(TokenList expressionTokens)
         {
-            string operationCode = $"if ({expressionTokens}) {{\t";
-            code.Add(TransformOperationCode(operationCode));
+            string operationCode = TransformOperationCode($"if ({expressionTokens})");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
         }
 
         /// <summary>
         /// Добавляет конструкцию ELSE в код.
         /// </summary>
-        public void AddElseConstruction(bool withParenthesis)
+        public void AddElseConstruction()
         {
-            string operationCode;
-            if (withParenthesis) operationCode = "} else {\t";
-            else operationCode = "else {\t";
+            string operationCode = TransformOperationCode("else");
+            string beginBrace = TransformOperationCode("{");
 
-            code.Add(TransformOperationCode(operationCode));
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
         }
 
         /// <summary>
@@ -55,6 +95,7 @@ namespace VerteX.Compiling.Generators
         /// </summary>
         public void AddConstructionEnd()
         {
+            tabsCount--;
             code.Add(TransformOperationCode("}"));
         }
 
@@ -71,44 +112,13 @@ namespace VerteX.Compiling.Generators
         }
 
         /// <summary>
-        /// Добавляет вызов функции в код.
-        /// </summary>
-        /// <param name="funcName">Имя функции.</param>
-        /// <param name="attribute">Аттрибут вызова.</param>
-        public void AddFunctionCall(Token funcName, Token attribute)
-        {
-
-            string operationCode = $"{funcName}({attribute});";
-
-            code.Add(TransformOperationCode(operationCode));
-        }
-
-        /// <summary>
-        /// Добавляет вызов функции в код.
-        /// </summary>
-        /// <param name="funcName">Имя функции.</param>
-        /// <param name="attribute">Аттрибут вызова.</param>
-        public void AddFunctionCall(Token funcName, string attribute)
-        {
-            AddFunctionCall(funcName, new Token(TokenType.Id, attribute));
-        }
-
-        /// <summary>
-        /// Добавляет вызов функции в код.
-        /// </summary>
-        /// <param name="funcName">Имя функции.</param>
-        public void AddFunctionCall(Token funcName)
-        {
-            AddFunctionCall(funcName, new Token(TokenType.Id, ""));
-        }
-
-        /// <summary>
         /// Добавляет шапку функции в код.
         /// </summary>
         /// <param name="funcName">Имя функции.</param>
         /// <param name="attributes">Аттрибуты объявления.</param>
         public void AddFunctionHeader(string funcName, TokenList attributes)
         {
+            if (header != "") throw new System.Exception("VerteX[ParsingError]: Нельзя обявлять функцию в другой функции.");
             List<string> _attributes = new List<string>();
             foreach (Token atr in attributes)
             {
@@ -117,15 +127,6 @@ namespace VerteX.Compiling.Generators
 
             header = TransformFunctionHeader($"public static void {funcName}({string.Join(", ", _attributes)})");
             name = funcName;
-        }
-
-        /// <summary>
-        /// Добавляет шапку функции в код.
-        /// </summary>
-        /// <param name="funcName">Имя функции.</param>
-        public void AddFunctionHeader(string name)
-        {
-            AddFunctionHeader(name, new TokenList());
         }
 
         /// <summary>
@@ -142,9 +143,13 @@ namespace VerteX.Compiling.Generators
         /// <summary>
         /// Добавляет спец. символы в код для читабельности.
         /// </summary>
-        protected static string TransformOperationCode(string code)
+        protected string TransformOperationCode(string code)
         {
-            return "\t\t\t" + code + "\n";
+            string defaultSpaces = "            ";
+            string customSpaces = "";
+            for (int i = 0; i < tabsCount; i++) customSpaces += "    ";
+
+            return defaultSpaces + customSpaces + code + "\n";
         }
 
         /// <summary>
@@ -152,7 +157,7 @@ namespace VerteX.Compiling.Generators
         /// </summary>
         protected static string TransformFunctionHeader(string code)
         {
-            return "\n\t\t" + code + "\n\t\t{\n";
+            return "\n        " + code + "\n        {\n";
         }
 
         /// <summary>
@@ -160,7 +165,7 @@ namespace VerteX.Compiling.Generators
         /// </summary>
         protected static string TransformClassHeader(string code)
         {
-            return "\n\t" + code + "\n\t{";
+            return "\n    " + code + "\n    {";
         }
 
         /// <summary>
@@ -169,7 +174,7 @@ namespace VerteX.Compiling.Generators
         /// <returns></returns>
         protected static string GetFunctionFooter()
         {
-            return "\t\t}\n";
+            return "        }\n";
         }
 
         /// <summary>
@@ -178,7 +183,7 @@ namespace VerteX.Compiling.Generators
         /// <returns></returns>
         protected static string GetClassFooter()
         {
-            return "\t}\n";
+            return "    }\n";
         }
     }
 }

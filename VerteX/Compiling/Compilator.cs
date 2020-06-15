@@ -14,7 +14,7 @@ namespace VerteX.Compiling
         /// <summary>
         /// Шапка класса сборки.
         /// </summary>
-        private static readonly string header = "namespace VerteX.Code\n{\n\tpublic static class EntryClass\n\t{";
+        private static readonly string header = "namespace VerteX.Code\n{\n    public static class EntryClass\n    {";
 
         /// <summary>
         /// Провайдер для компиляции.
@@ -38,7 +38,8 @@ namespace VerteX.Compiling
             "System.dll",
             "System.Core.dll",
             "Microsoft.CSharp.dll",
-            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location
+            Assembly.GetAssembly(typeof(BaseLibrary.IO)).Location,
+            Assembly.GetAssembly(typeof(BaseLibrary.Converter)).Location
         };
 
         /// <summary>
@@ -60,7 +61,7 @@ namespace VerteX.Compiling
         {
             string mainCode = CodeManager.Main.ToString();
             string userMethodsCode = CodeManager.UserMethods.ToString();
-            string fullCode = GetUsingsString() + header + mainCode + "\t}\n" + userMethodsCode + "}";
+            string fullCode = GetUsingsString() + header + mainCode + "    }\n" + userMethodsCode + "}";
 
             if (logs) 
             { 

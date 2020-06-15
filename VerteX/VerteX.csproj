@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseLibrary\Converter.cs" />
     <Compile Include="General\Arguments.cs" />
     <Compile Include="BaseLibrary\IO.cs" />
     <Compile Include="Compiling\Generators\BaseGenerator.cs" />
@@ -57,8 +58,6 @@
     <Compile Include="Lexing\Token.cs" />
     <Compile Include="Lexing\TokenList.cs" />
     <Compile Include="Lexing\TokenType.cs" />
-    <Compile Include="Parsing\Checker.cs" />
-    <Compile Include="Parsing\Exceptions.cs" />
     <Compile Include="Parsing\ParseMode.cs" />
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="General\MainPoint.cs" />

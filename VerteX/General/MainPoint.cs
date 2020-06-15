@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using System.Collections.Generic;
-
-using VerteX.Parsing;
 using VerteX.Compiling;
 using VerteX.Lexing;
+using VerteX.Parsing;
 
 namespace VerteX.General
 {
@@ -27,15 +25,15 @@ namespace VerteX.General
             string code = File.ReadAllText(args.filePath, Encoding.UTF8);
             try
             {
-                List<TokenList> tokens = Lexer.Lex(code);
+                TokenList tokens = Lexer.Lex(code);
                 if (args.debug)
                 {
-                    foreach (TokenList tokens1 in tokens)
+                    foreach (Token token in tokens)
                     {
-                        Console.WriteLine($"VerteX[LexerDebug](tokens):\n{tokens1.ToDebug()}");
+                        Console.WriteLine($"VerteX[LexerDebug](tokens):\n{token}");
                     }
                 }
-                Parser.Parse(tokens);
+                Parser.ParseRoot(tokens);
             }
             catch (Exception error)
             {

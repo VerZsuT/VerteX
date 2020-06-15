@@ -13,80 +13,66 @@ namespace VerteX.Lexing
         private static int currentIndex;
 
         /// <summary>
-        /// Массив строк для распозназнавания.
+        /// Хранит весь код для распознавания.
         /// </summary>
-        private static string[] source;
-
-        /// <summary>
-        /// Текущая распознаваемая линия.
-        /// </summary>
-        private static string currentLine;
+        private static string fullCode;
 
         /// <summary>
         /// Разбивает строку на базовые языковые единицы (токены).
         /// </summary>
         /// <param name="str">Исходная строка.</param>
         /// <returns>Список токенов для парсинга.</returns>
-        public static List<TokenList> Lex(string code)
+        public static TokenList Lex(string code)
         {
-            List<TokenList> tokens = new List<TokenList>();
+            fullCode = code;
+            TokenList tokens = new TokenList();
+            currentIndex = 0;
 
-            source = code.Split('\n');
-
-            foreach (string line in source)
+            while (currentIndex < code.Length)
             {
-                currentIndex = 0;
-                TokenList tokenList = new TokenList();
-                currentLine = line;
-                if (currentLine.Trim() == "") continue;
+                char ch = GetCurrentChar();
 
-                while (currentIndex < line.Length)
+                if (char.IsWhiteSpace(ch) || char.IsControl(ch))
                 {
-                    char ch = GetCurrentChar();
+                    currentIndex++;
+                    continue;
+                }
 
-                    if (char.IsWhiteSpace(ch) || char.IsControl(ch))
-                    {
-                        currentIndex++;
-                        continue;
-                    }
+                if (char.IsDigit(ch))
+                {
+                    tokens.Add(TokenType.Number, ReadNumber());
+                }
+                else if (GetOperatorType(ch) != TokenType.UndefinedOperator)
+                {
+                    string op = ReadOperator();
 
-                    if (char.IsDigit(ch))
+                    tokens.Add(GetOperatorType(op), op);
+                }
+                else if (char.IsLetter(ch))
+                {
+                    string id = ReadId();
+                    if (Keywords.IsKeyword(id))
                     {
-                        tokenList.Add(TokenType.Number, ReadNumber());
-                    }
-                    else if (GetOperatorType(ch) != TokenType.UndefinedOperator)
-                    {
-                        string op = ReadOperator();
-
-                        tokenList.Add(GetOperatorType(op), op);
-                    }
-                    else if (char.IsLetter(ch))
-                    {
-                        string id = ReadId();
-                        if (Keywords.IsKeyword(id))
-                        {
-                            tokenList.Add(TokenType.Keyword, id);
-                        }
-                        else
-                        {
-                            tokenList.Add(TokenType.Id, id);
-                        }
-                    }
-                    else if (ch == '"')
-                    {
-                        tokenList.Add(TokenType.String, ReadString('"'));
-                    }
-                    else if (ch == '\'')
-                    {
-                        tokenList.Add(TokenType.String, ReadString('\''));
+                        tokens.Add(TokenType.Keyword, id);
                     }
                     else
                     {
-                        tokenList.Add(GetOperatorType(ch), ch);
+                        tokens.Add(TokenType.Id, id);
                     }
-                    GetNextChar();
                 }
-                tokens.Add(tokenList);
+                else if (ch == '"')
+                {
+                    tokens.Add(TokenType.String, ReadString('"'));
+                }
+                else if (ch == '\'')
+                {
+                    tokens.Add(TokenType.String, ReadString('\''));
+                }
+                else
+                {
+                    tokens.Add(GetOperatorType(ch), ch);
+                }
+                GetNextChar();
             }
 
             return tokens;
@@ -97,9 +83,9 @@ namespace VerteX.Lexing
         /// </summary>
         private static char GetNextChar()
         {
-            if (++currentIndex < currentLine.Length)
+            if (++currentIndex < fullCode.Length)
             {
-                return currentLine[currentIndex];
+                return fullCode[currentIndex];
             }
             else
             {
@@ -112,7 +98,7 @@ namespace VerteX.Lexing
         /// </summary>
         private static char GetCurrentChar()
         {
-            return currentLine[currentIndex];
+            return fullCode[currentIndex];
         }
 
         /// <summary>

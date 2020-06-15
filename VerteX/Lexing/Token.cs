@@ -18,7 +18,6 @@ namespace VerteX.Lexing
         /// </summary>
         public string value;
 
-
         public Token(TokenType type, string value)
         {
             this.type = type;
@@ -39,21 +38,6 @@ namespace VerteX.Lexing
         public bool TypeIs(KeywordType type)
         {
             return Keywords.GetKeywordType(this) == type;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is Token token &&
-                   type == token.type &&
-                   value == token.value;
-        }
-
-        public override int GetHashCode()
-        {
-            var hashCode = 1148455455;
-            hashCode = hashCode * -1521134295 + type.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(value);
-            return hashCode;
         }
 
         /// <summary>
@@ -89,6 +73,21 @@ namespace VerteX.Lexing
         public static bool operator !=(Token left, Token right)
         {
             return (left.value != right.value) || (left.type != right.type);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Token token &&
+                   type == token.type &&
+                   value == token.value;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 1148455455;
+            hashCode = hashCode * -1521134295 + type.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(value);
+            return hashCode;
         }
     }
 }

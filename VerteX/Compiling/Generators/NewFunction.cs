@@ -17,6 +17,7 @@
         {
             CodeManager.UserMethods.Add(name, header + string.Concat(code) + footer);
             code.Clear();
+            header = "";
             variables.Clear();
         }
     }

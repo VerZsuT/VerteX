@@ -21,14 +21,14 @@ namespace VerteX.General
             Console.WriteLine("VerteX[RunTests](1): Создание функции без аргументов.");
             try
             {
-                Parse("функция привет() { \n печать(1) \n }");
+                Parse("функция привет() { печать(1); }");
                 Run();
                 Console.WriteLine("VerteX[RunTests](1): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](1.1): Вызов функции без аргументов...");
                 try
                 {
                     Console.Write("VerteX[TestsOut](1.1): ");
-                    Parse("функция привет() { \n печать(1) \n } \n привет()");
+                    Parse("функция привет() { печать(1); } привет();");
                     Run();
                     Console.WriteLine("VerteX[RunTests](1.1): Успешно!\n");
                 }
@@ -45,14 +45,14 @@ namespace VerteX.General
             Console.WriteLine("VerteX[RunTests](2): Создание функции с аргументом.");
             try
             {
-                Parse("функция привет(имя) { \n печать(имя) \n }");
+                Parse("функция привет(имя) { печать(имя); }");
                 Run();
                 Console.WriteLine("VerteX[RunTests](2): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](2.1): Вызов функции с аргументом...");
                 try
                 {
                     Console.Write("VerteX[TestsOut](2.1): ");
-                    Parse("функция привет(имя) { \n печать(имя) \n } \n привет('Саня')");
+                    Parse("функция привет(имя) { печать(имя); } привет('Саня');");
                     Run();
                     Console.WriteLine("VerteX[RunTests](2.1): Успешно!\n");
                 }
@@ -79,14 +79,14 @@ namespace VerteX.General
             Console.WriteLine("VerteX[RunTests](1): Объявление строковой переменной.");
             try
             {
-                Parse("имя = 'Саша'");
+                Parse("имя = 'Саша';");
                 Run();
                 Console.WriteLine("VerteX[RunTests](1): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](1.1): Использование строковой переменной.");
                 try
                 {
                     Console.Write("VerteX[TestsOut](1.1): ");
-                    Parse("имя = 'Саша' \n печать(имя)");
+                    Parse("имя = 'Саша'; печать(имя);");
                     Run();
                     Console.WriteLine("VerteX[RunTests](1.1): Успешно!\n");
                 }
@@ -103,14 +103,14 @@ namespace VerteX.General
             Console.WriteLine("VerteX[RunTests](2): Объявление числовой переменной.");
             try
             {
-                Parse("число = 5");
+                Parse("число = 5;");
                 Run();
                 Console.WriteLine("VerteX[RunTests](2): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](2.1): Использование числовой переменной.");
                 try
                 {
                     Console.Write("VerteX[TestsOut](2.1): ");
-                    Parse("число = 5 \n печать(число)");
+                    Parse("число = 5; печать(число);");
                     Run();
                     Console.WriteLine("VerteX[RunTests](2.1): Успешно!\n");
                 }
@@ -127,14 +127,14 @@ namespace VerteX.General
             Console.WriteLine("VerteX[RunTests](3): Объявление переменной с выражением.");
             try
             {
-                Parse("выражение = 5 + 2");
+                Parse("выражение = 5 + 2;");
                 Run();
                 Console.WriteLine("VerteX[RunTests](3): Успешно!\n");
                 Console.WriteLine("VerteX[RunTests](3.1): Использование переменной с выражением.");
                 try
                 {
                     Console.Write("VerteX[TestsOut](3.1): ");
-                    Parse("выражение = 5 + 2 \n печать(выражение)");
+                    Parse("выражение = 5 + 2; печать(выражение);");
                     Run();
                     Console.WriteLine("VerteX[RunTests](3.1): Успешно!\n");
                 }
@@ -164,7 +164,7 @@ namespace VerteX.General
         /// </summary>
         private static void Parse(string line)
         {
-            Parser.Parse(Lexer.Lex(line));
+            Parser.ParseRoot(Lexer.Lex(line));
         }
     }
 }

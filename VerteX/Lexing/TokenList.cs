@@ -12,13 +12,24 @@ namespace VerteX.Lexing
         /// </summary>
         public override string ToString()
         {
-            string tokensString = "";
+            List<string> tokensStrings = new List<string>();
             foreach (Token token in this)
             {
-                tokensString += token;
+                tokensStrings.Add(token.ToString());
             }
+            return string.Join(" ", tokensStrings);
+        }
 
-            return tokensString.Trim();
+        /// <summary>
+        /// Возвращает индекс первого токена с данным содержанием.
+        /// </summary>
+        public int IndexOf(string value)
+        {
+            for (int index = 0; index < Count; index++)
+            {
+                if (this[index].value == value) return index;
+            }
+            return -1;
         }
 
         /// <summary>
@@ -47,6 +58,10 @@ namespace VerteX.Lexing
             return newList;
         }
 
+        /// <summary>
+        /// Получает срез элементов от начального индекса до конца списка.
+        /// </summary>
+        /// <param name="firstIndex">Начальный индекс.</param>
         public TokenList GetRange(int firstIndex)
         {
             TokenList newList = new TokenList();
