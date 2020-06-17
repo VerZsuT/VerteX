@@ -33,6 +33,19 @@ namespace VerteX.Lexing
         }
 
         /// <summary>
+        /// Возвращает индекс первого токена с данным типом.
+        /// </summary>
+        public int IndexOf(KeywordType type)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                Token token = this[i];
+                if (Keywords.GetKeywordType(token) == type) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
         /// Возвращает строку, представляющую структуру списка, удобную для отладки.
         /// </summary>
         public string ToDebug()
@@ -43,6 +56,21 @@ namespace VerteX.Lexing
                 str += $"    [{token.type}]: {token.value}\n";
             }
             return str;
+        }
+
+        /// <summary>
+        /// Возвращает токен по данному индексу, если такового нет, то возвращает токен неопределённого типа.
+        /// </summary>
+        public Token Get(int index)
+        {
+            try
+            {
+                return this[index];
+            }
+            catch
+            {
+                return new Token(TokenType.Undefined, "");
+            }
         }
 
         /// <summary>

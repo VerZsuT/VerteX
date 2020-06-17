@@ -10,6 +10,28 @@ namespace VerteX.Compiling
     public class CodeManager
     {
         /// <summary>
+        /// Язык, на котором будут определяться ключевые слова.
+        /// </summary>
+        public static string Lang
+        {
+            get
+            {
+                return lang;
+            }
+            set
+            {
+                if (supportedLangs.Contains(value)) lang = value;
+            }
+        }
+
+        private static string lang = "ru";
+
+        /// <summary>
+        /// Список поддерживаемых языков.
+        /// </summary>
+        private static readonly List<string> supportedLangs = new List<string>() {"en", "ru"};
+
+        /// <summary>
         /// Генератор кода класса Main.
         /// </summary>
         public static Main Main = new Main();
@@ -38,14 +60,24 @@ namespace VerteX.Compiling
         /// <summary>
         /// карта имён методов для первичной замены.
         /// </summary>
-        public static Dictionary<string, string> namesMap = new Dictionary<string, string>()
+        public static Dictionary<string, Dictionary<string, string>> namesMap = new Dictionary<string, Dictionary<string, string>>()
         {
-            { "печать", "Print" },
-            { "ввод", "Input" },
-            { "целое", "ToInt32" },
-            { "дробное", "ToSingle" },
-            { "булевое", "ToBoolean" },
-            { "строка", "ToString" }
+            {"ru", new Dictionary<string, string>() {
+                {"печать",  "Print"},
+                {"ввод",    "Input"},
+                {"целое",   "ToInt32"},
+                {"дробное", "ToSingle"},
+                {"булевое", "ToBoolean"},
+                {"строка",  "ToString"}
+            }},
+            {"en", new Dictionary<string, string>() {
+                {"print",  "Print"},
+                {"input",    "Input"},
+                {"int",   "ToInt32"},
+                {"float", "ToSingle"},
+                {"bool", "ToBoolean"},
+                {"string",  "ToString"}
+            }}
         };
 
         /// <summary>
@@ -55,11 +87,11 @@ namespace VerteX.Compiling
         /// <returns>С префиксом.</returns>
         public static string TransformId(string id)
         {
-            foreach (string nameInMap in namesMap.Keys)
+            foreach (string nameInMap in namesMap[Lang].Keys)
             {
                 if (id == nameInMap)
                 {
-                    id = namesMap[nameInMap];
+                    id = namesMap[Lang][nameInMap];
                 }
             }
             foreach (string namespaceName in namespaces.Keys)

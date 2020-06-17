@@ -12,6 +12,12 @@
         True,
         False,
         While,
-        Do
+        Do,
+        Try,
+        Catch,
+        Switch,
+        Case,
+        Default,
+        Break
     }
 }

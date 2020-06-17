@@ -16,13 +16,94 @@ namespace VerteX.Compiling.Generators
         protected int tabsCount = 0;
 
         /// <summary>
+        /// Добавляет конструкцию SWITCH.
+        /// </summary>
+        public void AddSwitchConstruction(Token value)
+        {
+            string operationCode = TransformOperationCode($"switch ({value})");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет конструкцию CASE.
+        /// </summary>
+        public void AddCaseConstruction(Token value)
+        {
+            string operationCode = TransformOperationCode($"case {value}:");
+
+            code.Add(operationCode);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет конструкцию DEFAULT.
+        /// </summary>
+        public void AddDefaultCaseConstruction()
+        {
+            string operationCode = TransformOperationCode("default:");
+
+            code.Add(operationCode);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет команду BREAK.
+        /// </summary>
+        public void AddBreak()
+        {
+            string operationCode = TransformOperationCode("break;");
+
+            code.Add(operationCode);
+            tabsCount--;
+        }
+
+        /// <summary>
+        /// Добавляет конструкцию TRY.
+        /// </summary>
+        public void AddTryConstruction()
+        {
+            string operationCode = TransformOperationCode("try");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет полную конструкцию CATCH.
+        /// </summary>
+        public void AddCatchConstruction(Token errorValue)
+        {
+            string operationCode = TransformOperationCode($"catch (Exception {errorValue})");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
+
+        /// <summary>
+        /// Добавляет краткую конструкцию CATCH.
+        /// </summary>
+        public void AddCatchConstruction()
+        {
+            string operationCode = TransformOperationCode("catch");
+            string beginBrace = TransformOperationCode("{");
+
+            code.Add(operationCode + beginBrace);
+            tabsCount++;
+        }
+
+        /// <summary>
         /// Добавляет конструкцию WHILE после DO.
         /// </summary>
         public void AddEndingWhileConstruction(TokenList expression)
         {
-            string operationCode = $"while ({expression});";
+            string operationCode = TransformOperationCode($"while ({expression});");
 
-            code.Add(TransformOperationCode(operationCode));
+            code.Add(operationCode);
         }
 
         /// <summary>

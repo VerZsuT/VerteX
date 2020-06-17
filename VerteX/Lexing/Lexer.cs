@@ -186,7 +186,7 @@ namespace VerteX.Lexing
             char ch = GetCurrentChar();
             string id = "";
 
-            while (char.IsLetter(ch) || char.IsDigit(ch))
+            while (char.IsLetter(ch) || char.IsDigit(ch) || ch == '_')
             {
                 id += ch;
                 ch = GetNextChar();
@@ -224,6 +224,8 @@ namespace VerteX.Lexing
                     return TokenType.EndParenthesis;
                 case ";":
                     return TokenType.ComandEnd;
+                case ":":
+                    return TokenType.Colon;
             }
 
             List<string> arithmeticOperators = new List<string>()

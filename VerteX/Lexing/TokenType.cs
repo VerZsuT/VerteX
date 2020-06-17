@@ -22,6 +22,8 @@
         BeginSquereBracket,
         EndSquereBracket,
         Expression,
-        Comma
+        Comma,
+        Colon,
+        Undefined
     }
 }

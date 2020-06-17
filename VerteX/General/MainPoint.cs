@@ -28,10 +28,7 @@ namespace VerteX.General
                 TokenList tokens = Lexer.Lex(code);
                 if (args.debug)
                 {
-                    foreach (Token token in tokens)
-                    {
-                        Console.WriteLine($"VerteX[LexerDebug](tokens):\n{token}");
-                    }
+                    Console.WriteLine(tokens.ToDebug());
                 }
                 Parser.ParseRoot(tokens);
             }

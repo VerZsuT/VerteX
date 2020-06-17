@@ -58,6 +58,7 @@
     <Compile Include="Lexing\Token.cs" />
     <Compile Include="Lexing\TokenList.cs" />
     <Compile Include="Lexing\TokenType.cs" />
+    <Compile Include="Parsing\ParseExceptions.cs" />
     <Compile Include="Parsing\ParseMode.cs" />
     <Compile Include="Parsing\Parser.cs" />
     <Compile Include="General\MainPoint.cs" />

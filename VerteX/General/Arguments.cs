@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using VerteX.Compiling;
+using VerteX.Lexing;
 
 namespace VerteX.General
 {
@@ -75,6 +77,16 @@ namespace VerteX.General
                         if (File.Exists(param))
                         {
                             filePath = param;
+                        }
+                        else
+                        {
+                            string name = param.Split('=')[0];
+                            string value = param.Split('=')[1];
+
+                            if (name == "lang")
+                            {
+                                CodeManager.Lang = value.ToLower();
+                            }
                         }
                         break;
                 }
