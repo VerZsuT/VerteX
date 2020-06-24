@@ -18,6 +18,9 @@
         Switch,
         Case,
         Default,
-        Break
+        Break,
+        Use,
+        Links,
+        Import,
     }
 }

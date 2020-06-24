@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using VerteX.Compiling.Generators;
 using VerteX.Parsing;
 
@@ -9,28 +10,6 @@ namespace VerteX.Compiling
     /// </summary>
     public class CodeManager
     {
-        /// <summary>
-        /// Язык, на котором будут определяться ключевые слова.
-        /// </summary>
-        public static string Lang
-        {
-            get
-            {
-                return lang;
-            }
-            set
-            {
-                if (supportedLangs.Contains(value)) lang = value;
-            }
-        }
-
-        private static string lang = "ru";
-
-        /// <summary>
-        /// Список поддерживаемых языков.
-        /// </summary>
-        private static readonly List<string> supportedLangs = new List<string>() {"en", "ru"};
-
         /// <summary>
         /// Генератор кода класса Main.
         /// </summary>
@@ -52,32 +31,22 @@ namespace VerteX.Compiling
         public static Dictionary<string, List<string>> namespaces = new Dictionary<string, List<string>>()
         {
             { "IO", new List<string>() {"Print", "Input"} },
-            { "UserMethods", new List<string>() },
-            { "Convert", new List<string>() {"ToInt32", "ToSingle", "ToString"} },
+            { "Convert", new List<string>() {"ToInt32", "ToSingle", "ToString", "ToChar"} },
             { "Converter", new List<string>() {"ToBoolean"} }
         };
 
         /// <summary>
         /// карта имён методов для первичной замены.
         /// </summary>
-        public static Dictionary<string, Dictionary<string, string>> namesMap = new Dictionary<string, Dictionary<string, string>>()
+        public static Dictionary<string, string> namesMap = new Dictionary<string, string>()
         {
-            {"ru", new Dictionary<string, string>() {
-                {"печать",  "Print"},
-                {"ввод",    "Input"},
-                {"целое",   "ToInt32"},
-                {"дробное", "ToSingle"},
-                {"булевое", "ToBoolean"},
-                {"строка",  "ToString"}
-            }},
-            {"en", new Dictionary<string, string>() {
-                {"print",  "Print"},
-                {"input",    "Input"},
-                {"int",   "ToInt32"},
-                {"float", "ToSingle"},
-                {"bool", "ToBoolean"},
-                {"string",  "ToString"}
-            }}
+            {"печать",  "Print"},
+            {"ввод",    "Input"},
+            {"целое",   "ToInt32"},
+            {"дробное", "ToSingle"},
+            {"булевое", "ToBoolean"},
+            {"строка",  "ToString"},
+            {"символ",  "ToChar"}
         };
 
         /// <summary>
@@ -87,11 +56,11 @@ namespace VerteX.Compiling
         /// <returns>С префиксом.</returns>
         public static string TransformId(string id)
         {
-            foreach (string nameInMap in namesMap[Lang].Keys)
+            foreach (string nameInMap in namesMap.Keys)
             {
                 if (id == nameInMap)
                 {
-                    id = namesMap[Lang][nameInMap];
+                    id = namesMap[nameInMap];
                 }
             }
             foreach (string namespaceName in namespaces.Keys)
@@ -122,13 +91,28 @@ namespace VerteX.Compiling
         }
 
         /// <summary>
-        /// Стирает хранилище кода.
+        /// Обновляет словарь значениями из файла.
         /// </summary>
-        public static void Restore()
+        public static void UpdateNamesMap(string filePath)
         {
-            Main = new Main();
-            UserMethods = new UserMethods();
-            NewFunction = new NewFunction();
+            string data;
+
+            if (File.Exists(filePath))
+                data = File.ReadAllText(filePath);
+            else return;
+
+            foreach (string line in data.Split('\n'))
+            {
+                if (line != "")
+                {
+                    string[] names = line.Split('=');
+                    string firstName = names[0].Trim();
+                    string secondName = names[1].Trim();
+
+                    if (!namesMap.ContainsKey(firstName))
+                        namesMap.Add(firstName, secondName);
+                }
+            }
         }
     }
 }

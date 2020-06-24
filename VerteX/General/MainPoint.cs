@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using VerteX.Compiling;
+using VerteX.Exceptions;
 using VerteX.Lexing;
 using VerteX.Parsing;
 
@@ -15,38 +15,39 @@ namespace VerteX.General
         public static void Main(string[] argsArray)
         {
             Arguments args = new Arguments(argsArray);
-            if (args.runMode == RunMode.Test)
-            {
-                Tests.CreateFunction();
-                Tests.CreateVariable();
-                return;
-            }
 
-            string code = File.ReadAllText(args.filePath, Encoding.UTF8);
-            try
+            if (args.runMode == RunMode.Default || args.runMode == RunMode.Compile)
             {
-                TokenList tokens = Lexer.Lex(code);
-                if (args.debug)
-                {
-                    Console.WriteLine(tokens.ToDebug());
-                }
-                Parser.ParseRoot(tokens);
-            }
-            catch (Exception error)
-            {
-                Console.WriteLine(error);
-                return;
-            }
+                if (Path.GetExtension(args.filePath) != GlobalParams.codeExtention)
+                    throw new RunException($"Неверное расширение, ожидается '{GlobalParams.codeExtention}'");
 
-            Delegate assembly = Compilator.CompileCode(args.save, args.debug, args.logs);
-            if (args.run)
-            {
-                if (args.logs)
+                string code = File.ReadAllText(args.filePath, GlobalParams.defaultFileEncoding);
+                CodeManager.UpdateNamesMap(GlobalParams.linksPath);
+                try
                 {
-                    Console.WriteLine("VerteX[Log]: Запуск сборки...");
-                    Console.WriteLine("VerteX[Output]: ");
+                    TokenList tokens = Lexer.Lex(code);
+
+                    if (args.debug)
+                        Console.WriteLine(tokens.ToDebug());
+
+                    Parser.ParseRoot(tokens);
                 }
-                assembly.DynamicInvoke();
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    return;
+                }
+
+                Delegate assembly = Compilator.CompileCode(args.save, args.debug, args.logs, args.executable);
+                if (args.run)
+                {
+                    if (args.logs)
+                    {
+                        Console.WriteLine("VerteX[Лог]: Запуск сборки.");
+                        Console.WriteLine("VerteX[Вывод]: ");
+                    }
+                    assembly.DynamicInvoke();
+                }
             }
         }
     }

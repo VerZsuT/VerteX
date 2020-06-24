@@ -136,12 +136,17 @@ namespace VerteX.Compiling.Generators
         /// </summary>
         /// <param name="variableName">Имя переменной.</param>
         /// <param name="variableExpression">Присваеваемое выражение.</param>
-        public void AddVariableAssignment(string variableName, TokenList variableExpression)
+        public void AddVariableAssignment(string variableName, TokenList variableExpression, bool isGlobal)
         {
             bool isReassignment = variables.Contains(variableName);
-            string prefix = !isReassignment ? "var " : "";
+            string prefix = (!isReassignment && !isGlobal) ? "var " : "";
             string operationCode = $"{prefix}{variableName} = {variableExpression};";
-            if (!isReassignment) variables.Add(variableName);
+
+            if (!isReassignment)
+                variables.Add(variableName);
+
+            if (isGlobal)
+                Compilator.AddVariable(variableName);
 
             code.Add(TransformOperationCode(operationCode));
         }

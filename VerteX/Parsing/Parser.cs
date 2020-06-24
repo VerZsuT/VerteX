@@ -1,8 +1,9 @@
-﻿using System;
+﻿using System.IO;
 using VerteX.Compiling;
 using VerteX.Compiling.Generators;
+using VerteX.Exceptions;
+using VerteX.General;
 using VerteX.Lexing;
-using VerteX.Parsing.Exceptions;
 
 namespace VerteX.Parsing
 {
@@ -17,17 +18,22 @@ namespace VerteX.Parsing
         private static ParseMode parseMode = ParseMode.Default;
 
         /// <summary>
+        /// Индекс текущей строки.
+        /// </summary>
+        private static int lineIndex = 1;
+
+        /// <summary>
         /// Парсит основную пачку токенов.
         /// </summary>
         public static void ParseRoot(TokenList tokens)
         {
-            Parse(tokens, out _);
+            Parse(tokens, out _, true);
         }
 
         /// <summary>
         /// Парсит тела конструкций, в том числе и новой функции.
         /// </summary>
-        public static void Parse(TokenList tokens, out int counter)
+        public static void Parse(TokenList tokens, out int counter, bool isRoot = false)
         {
             counter = 0;
             while (counter < tokens.Count)
@@ -36,7 +42,15 @@ namespace VerteX.Parsing
                 TokenList nextTokens = tokens.GetRange(counter);
                 Token currentToken = tokens[counter];
                 Token nextToken = tokens.Get(counter + 1);
-                if (currentToken.TypeIs(TokenType.Id)) 
+
+                if (currentToken.TypeIs(TokenType.NextLine))
+                {
+                    lineIndex++;
+                    counter++;
+                    continue;
+                }
+
+                if (currentToken.TypeIs(TokenType.Id))
                 {
                     // <variableName> = <expression>;
                     if (nextToken.TypeIs(TokenType.AssignOperator))
@@ -44,7 +58,7 @@ namespace VerteX.Parsing
                         string variableName = currentToken.value;
                         TokenList expression = nextTokens.GetRange(nextTokens.IndexOf("=") + 1, nextTokens.IndexOf(";"));
 
-                        generator.AddVariableAssignment(variableName, expression);
+                        generator.AddVariableAssignment(variableName, expression, isRoot);
                         counter += nextTokens.IndexOf(";") + 1;
                     }
                     // <id>(<expression>);
@@ -54,18 +68,13 @@ namespace VerteX.Parsing
                         Token name = currentToken;
                         TokenList attributes = GetExpressionInParenthesis(nextTokens, errors: false);
 
-                        if (attributes.Count == 0 && !nextTokens.Get(counter + 3).TypeIs(TokenType.EndParenthesis))
-                        {
-                            throw new Exception($"VerteX[ParsingError]: После '(' при вызове функции без параметров ожидалось ')', а не '{nextToken}'");
-                        }
+                        if (attributes.Count == 0 && !nextTokens.Get(2).TypeIs(TokenType.EndParenthesis))
+                            throw new ParseException($"После '(' при вызове функции без параметров ожидалось ')', а не '{nextToken}'", lineIndex);
 
                         generator.AddFunctionCall(name, attributes);
                         counter += nextTokens.IndexOf(";") + 1;
                     }
-                    else
-                    {
-                        throw new Exception($"VerteX[ParsingError]: После '{currentToken}' ожидалось '=' либо '(', а не '{nextToken}'.");
-                    }
+                    else throw new ParseException($"После '{currentToken}' ожидалось '=' либо '(', а не '{nextToken}'", lineIndex);
                 }
                 else if (currentToken.TypeIs(TokenType.Keyword))
                 {
@@ -75,29 +84,16 @@ namespace VerteX.Parsing
                         NewFunction newFunction = CodeManager.NewFunction;
                         string name = nextToken.value;
                         TokenList parameters = GetExpressionInParenthesis(nextTokens, errors: false);
-                        TokenList body;
-
-                        try
-                        {  
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException($"Объявление фунции '{name}' без тела не имеет смысла.");
-                        }
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
                         if (!nextToken.TypeIs(TokenType.Id))
-                        {
-                            throw new Exception($"VerteX[ParsingError]: После ключевого слова 'функция' ожидалось название объявляемой функции, а не '{nextToken}'");
-                        }
-                        if (!nextTokens.Get(counter + 2).TypeIs(TokenType.BeginParenthesis))
-                        {
-                            throw new Exception($"VerteX[ParsingError]: После названия функции ожидалось '(', а не '{nextToken}'");
-                        }
-                        if (parameters.Count == 0 && !nextTokens.Get(counter + 3).TypeIs(TokenType.EndParenthesis))
-                        {
-                            throw new Exception($"VerteX[ParsingError]: После '(' при объявлении функции без параметров ожидалось ')', а не '{nextToken}'");
-                        }
+                            throw new ParseException($"После ключевого слова 'функция' ожидалось название объявляемой функции, а не '{nextToken}'", lineIndex);
+
+                        if (!nextTokens.Get(2).TypeIs(TokenType.BeginParenthesis))
+                            throw new ParseException($"После названия функции ожидалось '(', а не '{nextToken}'", lineIndex);
+
+                        if (parameters.Count == 0 && !nextTokens.Get(3).TypeIs(TokenType.EndParenthesis))
+                            throw new ParseException($"После '(' при объявлении функции без параметров ожидалось ')', а не '{nextToken}'", lineIndex);
 
                         parameters.DeleteAll(",");
                         newFunction.AddFunctionHeader(name, parameters);
@@ -109,24 +105,11 @@ namespace VerteX.Parsing
                     // если (<expresion>) { <body> }
                     else if (currentToken.TypeIs(KeywordType.If))
                     {
-                        TokenList expression;
-                        TokenList body;
+                        TokenList expression = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
-                        try
-                        {
-                            expression = GetExpressionInParenthesis(nextTokens);
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyExpressionException)
-                        {
-                            throw new EmptyExpressionException("Конструкция 'если' без выражения");
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'если' без тела");
-                        }
-
-                        if (!nextToken.TypeIs(TokenType.BeginBrace))
+                        if (!nextToken.TypeIs(TokenType.BeginParenthesis))
+                            throw new ParseException($"После ')' ожидалось '{{', а не {nextToken}", lineIndex);
 
                         generator.AddIfConstruction(expression);
                         Parse(body, out _);
@@ -135,16 +118,7 @@ namespace VerteX.Parsing
                     // иначе { <body> }
                     else if (currentToken.TypeIs(KeywordType.Else))
                     {
-                        TokenList body;
-
-                        try
-                        {
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'иначе' без тела");
-                        }
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
                         generator.AddElseConstruction();
                         Parse(body, out _);
@@ -153,59 +127,31 @@ namespace VerteX.Parsing
                     // делать { <body> } пока (<expression>)
                     else if (currentToken.TypeIs(KeywordType.Do))
                     {
-                        TokenList body;
-
-                        try
-                        {
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'делать' без тела");
-                        }
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
                         generator.AddDoConstruction();
                         Parse(body, out _);
                         generator.AddConstructionEnd();
                         nextTokens = tokens.GetRange(counter);
                         currentToken = tokens[counter];
-                        
+
                         if (currentToken.TypeIs(KeywordType.While))
                         {
                             TokenList expression = GetExpressionInParenthesis(nextTokens);
 
                             if (expression.Count == 0)
-                            {
-                                throw new Exception($"VerteX[ParsingError]: Конструкция 'пока' без выражения.");
-                            }
+                                throw new ParseException($"Конструкция 'пока' без выражения", lineIndex);
 
                             generator.AddEndingWhileConstruction(expression);
                             counter += nextTokens.IndexOf(";") + 1;
                         }
-                        else
-                        {
-                            throw new Exception($"VerteX[ParsingError]: После окончания конструкции 'делать' ожидалось ключевое слово 'пока'.");
-                        }
+                        else throw new ParseException($"После окончания конструкции 'делать' ожидалось ключевое слово 'пока'", lineIndex);
                     }
                     // пока (<expression>) { <body> }
                     else if (currentToken.TypeIs(KeywordType.While))
                     {
-                        TokenList expression;
-                        TokenList body;
-
-                        try
-                        {
-                            expression = GetExpressionInParenthesis(nextTokens);
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'пока' без тела");
-                        }
-                        catch (EmptyExpressionException)
-                        {
-                            throw new EmptyExpressionException("Конструкция 'пока' без выражения");
-                        }
+                        TokenList expression = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
                         generator.AddWhileConstruction(expression);
                         Parse(body, out _);
@@ -214,16 +160,7 @@ namespace VerteX.Parsing
                     // пробовать { <tryBody> } отловить [(<errorValue>)] { <catchBody> }
                     else if (currentToken.TypeIs(KeywordType.Try))
                     {
-                        TokenList tryBody;
-
-                        try
-                        {
-                            tryBody = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'пробовать' без тела");
-                        }
+                        TokenList tryBody = GetBody(nextTokens, out counter, counter);
 
                         generator.AddTryConstruction();
                         Parse(tryBody, out _);
@@ -235,25 +172,12 @@ namespace VerteX.Parsing
                         if (currentToken.TypeIs(KeywordType.Catch))
                         {
                             TokenList expression = GetExpressionInParenthesis(nextTokens, errors: false);
-                            TokenList catchBody;
-
-                            try
-                            {
-                                catchBody = GetBody(nextTokens, out counter, counter);
-                            }
-                            catch (EmptyBodyException)
-                            {
-                                throw new EmptyBodyException("Конструкция 'отловить' без тела");
-                            }
+                            TokenList catchBody = GetBody(nextTokens, out counter, counter);
 
                             if (expression.Count == 1 && expression[0].TypeIs(TokenType.Id))
-                            {
                                 generator.AddCatchConstruction(expression[0]);
-                            }
                             else
-                            {
                                 generator.AddCatchConstruction();
-                            }
 
                             Parse(catchBody, out _);
                             generator.AddConstructionEnd();
@@ -262,21 +186,8 @@ namespace VerteX.Parsing
                     // определить (<value>) { <body> }
                     else if (currentToken.TypeIs(KeywordType.Switch))
                     {
-                        TokenList expression;
-                        TokenList body;
-
-                        try
-                        {
-                            expression = GetExpressionInParenthesis(nextTokens);
-                            body = GetBody(nextTokens, out counter, counter);
-                        }
-                        catch (EmptyBodyException)
-                        {
-                            throw new EmptyBodyException("Конструкция 'определить' без тела");
-                        }
-                        catch (EmptyExpressionException) {
-                            throw new EmptyExpressionException("Конструкция 'определить' без выражения");
-                        }
+                        TokenList expression = GetExpressionInParenthesis(nextTokens);
+                        TokenList body = GetBody(nextTokens, out counter, counter);
 
                         if (expression.Count == 1 && expression[0].TypeIs(TokenType.Id))
                         {
@@ -285,11 +196,46 @@ namespace VerteX.Parsing
                             generator.AddConstructionEnd();
                         }
                     }
+                    // использовать ...
+                    else if (currentToken.TypeIs(KeywordType.Use))
+                    {
+                        // ссылки "<path>"
+                        if (nextToken.TypeIs(KeywordType.Links) && nextTokens.Get(2).TypeIs(TokenType.String) &&
+                            Path.GetExtension(nextTokens[2].value) == GlobalParams.linksExtention)
+                            CodeManager.UpdateNamesMap(nextTokens[2].value);
+                        // <id>
+                        else if (nextToken.TypeIs(TokenType.Id))
+                        {
+                            Compilator.AddUsing(nextToken.ToString());
+                            Compilator.AddClassRef(nextToken.ToString());
+                        }
+
+                        counter += nextTokens.IndexOf(";") + 1;
+                    }
+                    // импорт ...
+                    else if (currentToken.TypeIs(KeywordType.Import))
+                    {
+                        if (nextToken.TypeIs(TokenType.String))
+                        {
+                            string path = nextToken.value;
+                            if (File.Exists(path))
+                            {
+                                string extention = Path.GetExtension(path);
+                                if (extention == GlobalParams.codeExtention)
+                                {
+                                    // ......
+                                }
+                                else
+                                {
+                                    Compilator.AddRef(path);
+                                }
+                            }
+                        }
+                        counter += nextTokens.IndexOf(";") + 1;
+                    }
+                    else throw new ParseException($"На первой позиции не ожидалось ключевое слово {currentToken}", lineIndex);
                 }
-                else
-                {
-                    throw new Exception($"VerteX[ParsingError]: Не удалось распознать слово '{currentToken}'.");
-                }
+                else throw new ParseException($"Не удалось распознать слово '{currentToken}'", lineIndex);
             }
         }
 
@@ -300,24 +246,33 @@ namespace VerteX.Parsing
         {
             BaseGenerator generator = CodeManager.GetGenerator(parseMode);
 
-            for (int index = 0; index < body.Count; index++) 
+            for (int index = 0; index < body.Count; index++)
             {
                 TokenList nextTokens = body.GetRange(index);
                 Token currentToken = body[index];
                 Token nextToken = body.Get(index + 1);
 
+                if (currentToken.TypeIs(TokenType.NextLine))
+                {
+                    lineIndex++;
+                    continue;
+                }
+
+                // случай <expression>:
                 if (currentToken.TypeIs(KeywordType.Case) && body[index + 2].TypeIs(TokenType.Colon))
                 {
                     TokenList caseBody = GetCaseBody(nextTokens, out index, index);
                     generator.AddCaseConstruction(nextToken);
                     Parse(caseBody, out _);
                 }
+                // по_умолчанию:
                 else if (currentToken.TypeIs(KeywordType.Default) && body[index + 1].TypeIs(TokenType.Colon))
                 {
                     TokenList defaultBody = GetCaseBody(nextTokens, out index, index);
                     generator.AddDefaultCaseConstruction();
                     Parse(defaultBody, out _);
                 }
+                // завершить;
                 else if (currentToken.TypeIs(KeywordType.Break))
                 {
                     generator.AddBreak();
@@ -335,9 +290,7 @@ namespace VerteX.Parsing
             TokenList list = tokens.GetRange(firstIndex, lastIndex);
 
             if (list.Count == 0)
-            {
-                throw new EmptyBodyException();
-            }
+                throw new EmptyBodyException("Конструкция 'случай' с пустым телом", lineIndex);
 
             counter = index + lastIndex - 1;
             return list;
@@ -356,12 +309,14 @@ namespace VerteX.Parsing
             {
                 if (token.TypeIs(TokenType.BeginParenthesis))
                 {
+                    if (beginsCount > 0) list.Add(token);
                     beginsCount++;
                     isStart = false;
                 }
                 else if (token.TypeIs(TokenType.EndParenthesis))
                 {
                     beginsCount--;
+                    if (beginsCount > 0) list.Add(token);
                 }
                 else if (beginsCount > 0)
                 {
@@ -374,10 +329,11 @@ namespace VerteX.Parsing
                 }
             }
 
+            if (beginsCount != 0)
+                throw new ParseException("Отсутствует закрывающая скобка в конструкции", lineIndex);
+
             if (errors && list.Count == 0)
-            {
-                throw new EmptyExpressionException();
-            }
+                throw new EmptyExpressionException("Пустое выражение", lineIndex);
 
             return list;
         }
@@ -396,14 +352,16 @@ namespace VerteX.Parsing
             {
                 if (token.TypeIs(TokenType.BeginBrace))
                 {
-                    if (!isStart) list.Add(token);
+                    if (!isStart)
+                        list.Add(token);
                     else isStart = false;
                     beginsCount++;
                 }
                 else if (token.TypeIs(TokenType.EndBrace))
                 {
                     beginsCount--;
-                    if (beginsCount != 0) list.Add(token);
+                    if (beginsCount != 0)
+                        list.Add(token);
                 }
                 else if (beginsCount > 0)
                 {
@@ -415,12 +373,13 @@ namespace VerteX.Parsing
             }
             counter = index2 + index;
 
+            if (beginsCount != 0)
+                throw new ParseException("Отсутствует закрывающая фигурная скобка", lineIndex);
+
             if (errors && list.Count == 0)
-            {
-                throw new EmptyBodyException();
-            }
+                throw new EmptyBodyException("Конструкция с пустым телом", lineIndex);
 
             return list;
-        }        
+        }
     }
 }

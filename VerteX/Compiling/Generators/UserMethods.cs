@@ -12,12 +12,6 @@ namespace VerteX.Compiling.Generators
         /// </summary>
         private readonly List<string> methods = new List<string>();
 
-        public UserMethods()
-        {
-            header = TransformClassHeader("public static class UserMethods");
-            footer = GetClassFooter();
-        }
-
         /// <summary>
         /// Добавить метод в код.
         /// </summary>
@@ -26,7 +20,6 @@ namespace VerteX.Compiling.Generators
         public void Add(string name, string code)
         {
             methods.Add(code);
-            CodeManager.namespaces["UserMethods"].Add(name);
         }
 
         /// <summary>

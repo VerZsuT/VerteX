@@ -24,6 +24,7 @@
         Expression,
         Comma,
         Colon,
-        Undefined
+        Undefined,
+        NextLine
     }
 }

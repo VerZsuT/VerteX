@@ -12,12 +12,12 @@ namespace VerteX.Lexing
         /// </summary>
         public override string ToString()
         {
-            List<string> tokensStrings = new List<string>();
+            string tokensString = "";
             foreach (Token token in this)
             {
-                tokensStrings.Add(token.ToString());
+                tokensString += token.ToString();
             }
-            return string.Join(" ", tokensStrings);
+            return tokensString;
         }
 
         /// <summary>

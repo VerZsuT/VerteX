@@ -7,6 +7,7 @@
     {
         Compile,
         Default,
-        Test
+        Link,
+        ClearLinks
     }
 }

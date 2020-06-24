@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using VerteX.Exceptions;
 
 namespace VerteX.Lexing
 {
@@ -10,7 +11,12 @@ namespace VerteX.Lexing
         /// <summary>
         /// Индекс текущего распознаваемого символа.
         /// </summary>
-        private static int currentIndex;
+        private static int currentCharIndex;
+
+        /// <summary>
+        /// Индекс текущей распознаваемой строки, используется для сообщений об ошибках.
+        /// </summary>
+        private static int currentLineIndex = 1;
 
         /// <summary>
         /// Хранит весь код для распознавания.
@@ -26,15 +32,21 @@ namespace VerteX.Lexing
         {
             fullCode = code;
             TokenList tokens = new TokenList();
-            currentIndex = 0;
+            currentCharIndex = 0;
 
-            while (currentIndex < code.Length)
+            while (currentCharIndex < code.Length)
             {
                 char ch = GetCurrentChar();
 
+                if (ch == '\n')
+                {
+                    tokens.Add(new Token(TokenType.NextLine, "\n"));
+                    currentLineIndex++;
+                }
+
                 if (char.IsWhiteSpace(ch) || char.IsControl(ch))
                 {
-                    currentIndex++;
+                    currentCharIndex++;
                     continue;
                 }
 
@@ -83,9 +95,9 @@ namespace VerteX.Lexing
         /// </summary>
         private static char GetNextChar()
         {
-            if (++currentIndex < fullCode.Length)
+            if (++currentCharIndex < fullCode.Length)
             {
-                return fullCode[currentIndex];
+                return fullCode[currentCharIndex];
             }
             else
             {
@@ -98,7 +110,7 @@ namespace VerteX.Lexing
         /// </summary>
         private static char GetCurrentChar()
         {
-            return fullCode[currentIndex];
+            return fullCode[currentCharIndex];
         }
 
         /// <summary>
@@ -122,10 +134,10 @@ namespace VerteX.Lexing
                         secondPart += ch;
                         ch = GetNextChar();
                     }
-                    currentIndex--;
-                    if (secondPart == "") 
-                    { 
-                        return firstPart; 
+                    currentCharIndex--;
+                    if (secondPart == "")
+                    {
+                        return firstPart;
                     }
                     else
                     {
@@ -136,7 +148,7 @@ namespace VerteX.Lexing
                 number += ch;
                 ch = GetNextChar();
             }
-            currentIndex--;
+            currentCharIndex--;
             return number;
         }
 
@@ -154,6 +166,8 @@ namespace VerteX.Lexing
             {
                 str += ch;
                 ch = GetNextChar();
+                if (currentCharIndex > fullCode.Length)
+                    throw new LexException("Не удалось распознать строку, пропущена закрывающая кавычка", currentLineIndex);
             }
 
             return str;
@@ -174,7 +188,7 @@ namespace VerteX.Lexing
                 ch = GetNextChar();
                 newOp += ch;
             }
-            currentIndex--;
+            currentCharIndex--;
             return beforeOp;
         }
 
@@ -186,12 +200,12 @@ namespace VerteX.Lexing
             char ch = GetCurrentChar();
             string id = "";
 
-            while (char.IsLetter(ch) || char.IsDigit(ch) || ch == '_')
+            while (char.IsLetter(ch) || (id != "" && char.IsDigit(ch)) || ch == '_' || (id != "" && ch == '.'))
             {
                 id += ch;
                 ch = GetNextChar();
             }
-            currentIndex--;
+            currentCharIndex--;
             return id;
         }
 
